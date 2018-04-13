@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"declaration": true,
+		"stripInternal": true,
+		"experimentalDecorators": true,
+		"strictNullChecks": false,
+		"noImplicitAny": false,
+		"module": "es2015",
+		"moduleResolution": "node",
+		"rootDir": ".",
+		"outDir": "dist",
+		"sourceMap": true,
+		"inlineSources": true,
+		"target": "es5",
+		"skipLibCheck": true,
+		"lib": [
+			"es2015",
+			"dom"
+		]
+	},
+	"include": [
+		"src/**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"src/**/*.spec.ts",
+		"src/**/__tests__/*.ts"
+	],
+	"compileOnSave": false,
+	"atom": {
+		"rewriteTsconfig": false
+	},
+	"angularCompilerOptions": {
+		"strictMetadataEmit": true
+	}
+}

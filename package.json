@@ -1,0 +1,29 @@
+{
+  "name": "sheetbase-angular",
+  "version": "0.0.1",
+  "description": "Sheetbase core module for Angular apps.",
+  "main": "index.js",
+  "scripts": {
+    "transpile": "ngc",
+    "package": "rollup -c",
+    "minify": "uglifyjs dist/bundles/sheetbase.umd.js --screw-ie8 --compress --mangle --comments --output dist/bundles/sheetbase.umd.min.js",
+    "build": "npm run transpile && npm run package && npm run minify"
+  },
+  "author": "316 Company",
+  "license": "MIT",
+  "dependencies": {
+    "@angular/common": "^5.2.9",
+    "@angular/core": "^5.2.9",
+    "@angular/forms": "^5.2.9",
+    "ionic-angular": "^3.9.2",
+    "lodash": "^4.17.5",
+    "rxjs": "^5.5.8"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^5.2.9",
+    "@angular/compiler-cli": "^5.2.9",
+    "rollup": "^0.57.1",
+    "typescript": "^2.8.1",
+    "uglify-js": "^3.3.20"
+  }
+}
