@@ -64,11 +64,10 @@
             }, null, 'name', false)
                 .then(function (tables) {
                 _this.tables = tables;
-                _this.loadData();
+                _this.events.publish('appData:tables', tables);
+                _this.loadData(); // auto-load
             })
-                .catch(function (error) {
-                _this.loadData();
-            });
+                .catch(function (error) { _this.init(); }); // retry
         };
         SheetbaseService.prototype.get = function (collection, doc, query, oneTime) {
             var _this = this;
@@ -76,78 +75,118 @@
             if (query === void 0) { query = null; }
             if (oneTime === void 0) { oneTime = false; }
             return new rxjs.Observable(function (observer) {
-                var dataInterval = setInterval(function () {
-                    if (_this.tables) {
-                        clearInterval(dataInterval);
-                        /*
-                                  *
-                                  * */
-                        /*
-                        *
-                        * */
-                        _this.database = _this.database || {};
-                        var itemsObject = _this.database[collection] || {};
-                        // non-autoload table, load now
-                        // non-autoload table, load now
-                        if (!itemsObject || Object.keys(itemsObject).length < 1) {
-                            var thisTable_1 = null;
-                            (_this.tables || []).forEach(function (table) { if (table.name === collection)
-                                thisTable_1 = table; });
-                            if (thisTable_1)
-                                _this.loadData([thisTable_1]);
-                        }
-                        // return current whatever data
-                        // return current whatever data
-                        if (doc) {
+                _this.database = _this.database || {};
+                var itemsObject = _this.database[collection] || {};
+                if (!itemsObject || Object.keys(itemsObject).length < 1)
+                    _this.initNonAutoloadTable(collection);
+                // return current whatever data
+                // return current whatever data
+                if (doc) {
+                    observer.next(Object.assign({
+                        $key: doc
+                    }, itemsObject[doc] || {}));
+                    // event
+                    // event
+                    if (oneTime) {
+                        observer.complete();
+                    }
+                    else {
+                        // listen for change
+                        // listen for change
+                        _this.events.subscribe('appData:' + collection, function (eventData) {
                             observer.next(Object.assign({
                                 $key: doc
-                            }, itemsObject[doc] || {}));
-                            // event
-                            // event
-                            if (oneTime) {
-                                observer.complete();
-                            }
-                            else {
-                                // listen for change
-                                // listen for change
-                                _this.events.subscribe('appData:' + collection, function (eventData) {
-                                    observer.next(Object.assign({
-                                        $key: doc
-                                    }, eventData[doc] || {}));
-                                });
-                            }
-                        }
-                        else {
-                            var itemsArray = [];
-                            for (var key in itemsObject) {
-                                itemsArray.push(Object.assign({
-                                    $key: key
-                                }, itemsObject[key]));
-                            }
-                            observer.next(_this.filterResult(itemsArray, query));
-                            // event
-                            // event
-                            if (oneTime) {
-                                observer.complete();
-                            }
-                            else {
-                                // listen for change
-                                // listen for change
-                                _this.events.subscribe('appData:' + collection, function (eventData) {
-                                    delete eventData.$key;
-                                    observer.next(_this.filterResult(HELPER.o2a(eventData, true), query));
-                                });
-                            }
-                        }
-                        /*
-                                  *
-                                  * */
+                            }, eventData[doc] || {}));
+                        });
                     }
-                }, 100);
-                setTimeout(function () {
-                    clearInterval(dataInterval);
-                }, 10000);
+                }
+                else {
+                    var itemsArray = [];
+                    for (var key in itemsObject) {
+                        itemsArray.push(Object.assign({
+                            $key: key
+                        }, itemsObject[key]));
+                    }
+                    observer.next(_this.filterResult(itemsArray, query));
+                    // event
+                    // event
+                    if (oneTime) {
+                        observer.complete();
+                    }
+                    else {
+                        // listen for change
+                        // listen for change
+                        _this.events.subscribe('appData:' + collection, function (eventData) {
+                            delete eventData.$key;
+                            observer.next(_this.filterResult(HELPER.o2a(eventData, true), query));
+                        });
+                    }
+                }
             });
+        };
+        SheetbaseService.prototype.api = function (method, endpoint, params, body) {
+            var _this = this;
+            if (method === void 0) { method = 'GET'; }
+            if (endpoint === void 0) { endpoint = null; }
+            if (params === void 0) { params = {}; }
+            if (body === void 0) { body = {}; }
+            return new Promise(function (resolve, reject) {
+                if (!_this.CONFIG.backend)
+                    reject({
+                        message: 'No backend!'
+                    });
+                // build uri
+                var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
+                if (endpoint)
+                    uri += '?e=' + endpoint;
+                if (!endpoint && Object.keys(params || {}).length > 0)
+                    uri += '?';
+                for (var key in (params || {})) {
+                    uri += '&' + key + '=' + params[key];
+                }
+                if (!endpoint && Object.keys(params || {}).length > 0)
+                    uri = uri.replace('?&', '?');
+                // get data
+                // get data
+                if (method.toLowerCase() === 'post') {
+                    _this.http.post(uri, JSON.stringify(body), {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }).subscribe(function (data) {
+                        if (data.error)
+                            reject(data);
+                        resolve(data);
+                    }, reject);
+                }
+                else {
+                    _this.http.get(uri).subscribe(function (data) {
+                        if (data.error)
+                            reject(data);
+                        resolve(data);
+                    }, reject);
+                }
+            });
+        };
+        SheetbaseService.prototype.initNonAutoloadTable = function (tableName) {
+            var _this = this;
+            if (!this.tables) {
+                this.events.subscribe('appData:tables', function (eventData) {
+                    _this.loadNonAutoloadTable(tableName);
+                });
+            }
+            else {
+                this.loadNonAutoloadTable(tableName);
+            }
+        };
+        SheetbaseService.prototype.loadNonAutoloadTable = function (tableName) {
+            var thisTable = null;
+            (this.tables || []).forEach(function (table) {
+                if (table.name === tableName)
+                    thisTable = table;
+            });
+            if (thisTable)
+                return this.loadData([thisTable]);
         };
         SheetbaseService.prototype.loadData = function (tables) {
             var _this = this;
@@ -159,8 +198,9 @@
                     return;
                 if ((_this.onTheFlyTracker || []).indexOf(table.name) > -1)
                     return;
-                console.info('GO FLY -> ' + table.name + '[]');
+                // console.info('GO FLY -> '+ table.name +'[]');
                 // record data on the fly to avoid unneccesary actions
+                // console.info('GO FLY -> '+ table.name +'[]');
                 // record data on the fly to avoid unneccesary actions
                 _this.onTheFlyTracker = _this.onTheFlyTracker || [];
                 _this.onTheFlyTracker.push(table.name);
@@ -403,7 +443,6 @@
     }());
 
     exports.SheetbaseModule = SheetbaseModule;
-    exports.SheetbaseConfigService = SheetbaseConfigService;
     exports.SheetbaseService = SheetbaseService;
 
     Object.defineProperty(exports, '__esModule', { value: true });

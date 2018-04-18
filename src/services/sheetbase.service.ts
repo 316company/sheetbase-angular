@@ -42,11 +42,10 @@ export class SheetbaseService {
     }, null, 'name', false)
     .then(tables => {
       this.tables = tables;
-      this.loadData();
+      this.events.publish('appData:tables', tables);
+      this.loadData(); // auto-load
     })
-    .catch(error => {
-      this.loadData();
-    });
+    .catch(error => { this.init() }); // retry
   }
 
   get(
@@ -55,78 +54,118 @@ export class SheetbaseService {
     query: IDataQuery = null,
     oneTime: boolean = false
   ): Observable<any> {
-    return new Observable(observer => {
+    return new Observable(observer => {      
+      this.database = this.database || {};
+      let itemsObject = this.database[collection] || {};
+      
+      if(!itemsObject || Object.keys(itemsObject).length < 1) this.initNonAutoloadTable(collection);
 
-      let dataInterval = setInterval(() => {
-        if(this.tables) {
-          clearInterval(dataInterval);
-
-          /*
-          *
-          * */
-          this.database = this.database || {};
-          let itemsObject = this.database[collection] || {};
-    
-          // non-autoload table, load now
-          if(!itemsObject || Object.keys(itemsObject).length < 1) {
-            let thisTable = null; (this.tables || []).forEach(table => { if(table.name === collection) thisTable = table });
-            if(thisTable) this.loadData([thisTable]);
-          }
-    
-          // return current whatever data
-          if(doc) {
+      // return current whatever data
+      if(doc) {
+        observer.next(Object.assign({
+          $key: doc
+        }, itemsObject[doc] || {}));
+        
+        // event
+        if(oneTime) {
+          observer.complete();
+        } else {
+          // listen for change
+          this.events.subscribe('appData:'+ collection, eventData => {
             observer.next(Object.assign({
               $key: doc
-            }, itemsObject[doc] || {}));
-            
-            // event
-            if(oneTime) {
-              observer.complete();
-            } else {
-              // listen for change
-              this.events.subscribe('appData:'+ collection, eventData => {
-                observer.next(Object.assign({
-                  $key: doc
-                }, eventData[doc] || {}));
-              });
-            }
-          } else {
-            let itemsArray = [];
-            for(let key in itemsObject) {
-              itemsArray.push(Object.assign({
-                $key: key
-              }, itemsObject[key]));
-            }        
-    
-            observer.next(
-              this.filterResult(itemsArray, query)
-            );
-    
-            // event
-            if(oneTime) {
-              observer.complete();
-            } else {
-              // listen for change
-              this.events.subscribe('appData:'+ collection, eventData => {
-                delete eventData.$key;
-                observer.next(
-                  this.filterResult(
-                    HELPER.o2a(eventData, true), query
-                  )
-                );
-              });
-            }
-          }
-          /*
-          *
-          * */
+            }, eventData[doc] || {}));
+          });
         }
-      }, 100);
-      setTimeout(() => {
-        clearInterval(dataInterval);
-      }, 10000);
+      } else {
+        let itemsArray = [];
+        for(let key in itemsObject) {
+          itemsArray.push(Object.assign({
+            $key: key
+          }, itemsObject[key]));
+        }        
+
+        observer.next(
+          this.filterResult(itemsArray, query)
+        );
+
+        // event
+        if(oneTime) {
+          observer.complete();
+        } else {
+          // listen for change
+          this.events.subscribe('appData:'+ collection, eventData => {
+            delete eventData.$key;
+            observer.next(
+              this.filterResult(
+                HELPER.o2a(eventData, true), query
+              )
+            );
+          });
+        }
+      }
       
     });
+  }
+
+
+
+  api(method: string = 'GET', endpoint: string = null, params: any = {}, body: any = {}): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if(!this.CONFIG.backend) reject({
+        message: 'No backend!'
+      });
+
+      // build uri
+      let uri: string = 'https://script.google.com/macros/s/'+ this.CONFIG.backend +'/exec';
+      if(endpoint) uri += '?e='+ endpoint;
+      if(!endpoint && Object.keys(params||{}).length > 0) uri += '?';
+      for(let key in (params||{})) {
+        uri += '&'+ key +'='+ params[key];
+      }
+      if(!endpoint && Object.keys(params||{}).length > 0) uri = uri.replace('?&', '?');
+
+      // get data
+      if(method.toLowerCase() === 'post') {
+        this.http.post<any>(uri, JSON.stringify(body), {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).subscribe(data => {
+          if(data.error) reject(data);
+          resolve(data);
+        }, reject);
+      } else {
+        this.http.get<any>(uri).subscribe(data => {
+          if(data.error) reject(data);
+          resolve(data);        
+        }, reject);
+      }
+    });
+  }
+
+
+
+
+
+
+
+  private initNonAutoloadTable(tableName: string) {
+    if(!this.tables) {
+      this.events.subscribe('appData:tables', eventData => {
+        this.loadNonAutoloadTable(tableName);
+      });
+    } else {
+      this.loadNonAutoloadTable(tableName);
+    }
+  }
+  
+  private loadNonAutoloadTable(tableName: string) {
+    let thisTable = null;
+    (this.tables || []).forEach(table => {
+      if(table.name === tableName) thisTable = table;
+    });
+    if(thisTable) return this.loadData([thisTable]);
   }
 
   private loadData(tables: ITable[] = null): void {
@@ -136,7 +175,7 @@ export class SheetbaseService {
       if(!tables && !table.autoload) return;
       if((this.onTheFlyTracker||[]).indexOf(table.name) > -1) return;
 
-      console.info('GO FLY -> '+ table.name +'[]');
+      // console.info('GO FLY -> '+ table.name +'[]');
 
       // record data on the fly to avoid unneccesary actions
       this.onTheFlyTracker = this.onTheFlyTracker || [];

@@ -18,6 +18,9 @@ export declare class SheetbaseService {
     };
     init(): any;
     get(collection: string, doc?: string, query?: IDataQuery, oneTime?: boolean): Observable<any>;
+    api(method?: string, endpoint?: string, params?: any, body?: any): Promise<any>;
+    private initNonAutoloadTable(tableName);
+    private loadNonAutoloadTable(tableName);
     private loadData(tables?);
     private filterResult(items, query);
     spreadsheetGet(sheet: {

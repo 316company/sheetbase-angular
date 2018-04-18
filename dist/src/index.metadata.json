@@ -1,1 +1,1 @@
-[{"__symbolic":"module","version":4,"metadata":{},"exports":[{"from":"./sheetbase.module","export":["SheetbaseModule"]},{"from":"./services/sheetbase-config.service","export":["SheetbaseConfigService"]},{"from":"./services/sheetbase.service","export":["SheetbaseService"]}]}]
+[{"__symbolic":"module","version":4,"metadata":{},"exports":[{"from":"./sheetbase.module","export":["SheetbaseModule"]},{"from":"./services/sheetbase.service","export":["SheetbaseService"]}]}]

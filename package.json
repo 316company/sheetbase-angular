@@ -1,6 +1,6 @@
 {
   "name": "sheetbase-angular",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Sheetbase core module for Angular apps.",
   "main": "index.js",
   "scripts": {

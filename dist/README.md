@@ -25,6 +25,6 @@ Inject SheetbaseService into your page.
     	private sheetbase: SheetbaseProvider
     ) {}
 
-## Config
+## Docs
 
-See how to config Sheetbase project [here](https://sheetbase.net/docs?a=config).
+See [Documentation](https://sheetbase.net/docs) for more.
