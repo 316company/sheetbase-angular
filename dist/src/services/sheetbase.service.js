@@ -111,9 +111,12 @@ var SheetbaseService = /** @class */ (function () {
             // get data
             // get data
             if (method.toLowerCase() === 'post') {
+                body = Object.assign({}, body, {
+                    apiKey: _this.CONFIG.apiKey
+                });
                 _this.http.post(uri, JSON.stringify(body), {
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 }).subscribe(function (data) {
                     if (data.error)
@@ -122,6 +125,12 @@ var SheetbaseService = /** @class */ (function () {
                 }, reject);
             }
             else {
+                if (!endpoint && Object.keys(params).length < 1) {
+                    uri += '?apiKey=' + _this.CONFIG.apiKey;
+                }
+                else {
+                    uri += '&apiKey=' + _this.CONFIG.apiKey;
+                }
                 _this.http.get(uri).subscribe(function (data) {
                     if (data.error)
                         reject(data);

@@ -127,15 +127,23 @@ export class SheetbaseService {
 
       // get data
       if(method.toLowerCase() === 'post') {
+        body = Object.assign({}, body, {
+          apiKey: this.CONFIG.apiKey
+        });
         this.http.post<any>(uri, JSON.stringify(body), {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/x-www-form-urlencoded'
           }
         }).subscribe(data => {
           if(data.error) reject(data);
           resolve(data);
         }, reject);
       } else {
+        if(!endpoint && Object.keys(params).length < 1) {
+          uri += '?apiKey='+ this.CONFIG.apiKey;
+        } else {
+          uri += '&apiKey='+ this.CONFIG.apiKey;
+        }
         this.http.get<any>(uri).subscribe(data => {
           if(data.error) reject(data);
           resolve(data);        

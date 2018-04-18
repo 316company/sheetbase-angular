@@ -1,6 +1,6 @@
 export interface IConfig {
-    database: string,
     apiKey: string,
+    database: string,
     backend?: string,
     cache?: number,
     modifiers?: any
