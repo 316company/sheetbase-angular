@@ -1,119 +1,60 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Events } from 'ionic-angular';
 import { Observable } from 'rxjs';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 
-import { IDataQuery, ITable } from '../misc/interfaces';
+import { IDataQuery } from '../misc/interfaces';
 import { HELPER } from '../misc/helper';
 
 
 @Injectable()
 export class SheetbaseService {
 
-  private tables: ITable[];
   private database: {
     [collection: string]: any
   };
-  private onTheFlyTracker: string[];
 
   constructor(
     private ngZone: NgZone,
     private http: HttpClient,
-    private events: Events,
 
     @Inject(SheetbaseConfigService) private CONFIG
   ) {
-    this.tables = [{name: 'categories'},{name: 'tags'},{name: 'authors'},{name: 'posts'},{name: 'pages'}]; // default tables
-  }
-
-  db() {
-    return {
-      id: this.CONFIG.database,
-      tables: this.tables || []
-    };
-  }
-
-  init(): any {
-    this.spreadsheetGet({
-      id: this.CONFIG.database,
-      range: '__tables__!A1:C'
-    }, null, 'name', false)
-    .then(tables => {
-      this.tables = tables;
-      this.events.publish('appData:tables', tables);
-      this.loadData(); // auto-load
-    })
-    .catch(error => { this.init() }); // retry
   }
 
   get(
     collection: string,
     doc: string = null,
-    query: IDataQuery = null,
-    oneTime: boolean = false
+    query: IDataQuery = null
   ): Observable<any> {
-    return new Observable(observer => {      
-      this.database = this.database || {};
-      let itemsObject = this.database[collection] || {};
-      
-      if(!itemsObject || Object.keys(itemsObject).length < 1) this.initNonAutoloadTable(collection);
+    return new Observable(observer => {
+      let itemsObject = (this.database||{})[collection] || {};
+      if(!itemsObject || Object.keys(itemsObject).length < 1) {
+        this.spreadsheetGet({
+          id: this.CONFIG.database,
+          range: collection +'!A1:ZZ'
+        }, collection)
+        .then(data => {
+          this.database = this.database || {};
+          this.database[collection] = data;
 
-      // return current whatever data
-      if(doc) {
-        observer.next(Object.assign({
-          $key: doc
-        }, itemsObject[doc] || {}));
-        
-        // event
-        if(oneTime) {
+          observer.next(this.returnData(collection, doc, query));
           observer.complete();
-        } else {
-          // listen for change
-          this.events.subscribe('appData:'+ collection, eventData => {
-            observer.next(Object.assign({
-              $key: doc
-            }, eventData[doc] || {}));
-          });
-        }
+        }).catch(error => {
+          return Observable.throw(error);
+        });
       } else {
-        let itemsArray = [];
-        for(let key in itemsObject) {
-          itemsArray.push(Object.assign({
-            $key: key
-          }, itemsObject[key]));
-        }        
-
-        observer.next(
-          this.filterResult(itemsArray, query)
-        );
-
-        // event
-        if(oneTime) {
-          observer.complete();
-        } else {
-          // listen for change
-          this.events.subscribe('appData:'+ collection, eventData => {
-            delete eventData.$key;
-            observer.next(
-              this.filterResult(
-                HELPER.o2a(eventData, true), query
-              )
-            );
-          });
-        }
+        observer.next(this.returnData(collection, doc, query));
+        observer.complete();
       }
-      
     });
   }
-
-
 
   api(method: string = 'GET', endpoint: string = null, params: any = {}, body: any = {}): Promise<any> {
     return new Promise((resolve, reject) => {
       if(!this.CONFIG.backend) reject({
-        message: 'No backend!'
+        message: 'No backend found in the config file!'
       });
 
       // build uri
@@ -158,57 +99,22 @@ export class SheetbaseService {
 
 
 
-  private initNonAutoloadTable(tableName: string) {
-    if(!this.tables) {
-      this.events.subscribe('appData:tables', eventData => {
-        this.loadNonAutoloadTable(tableName);
-      });
-    } else {
-      this.loadNonAutoloadTable(tableName);
+  private returnData(collection, doc, query) {
+    let itemsObject = (this.database||{})[collection] || {};
+    // item
+    if(doc) {
+      return Object.assign({
+        $key: doc
+      }, itemsObject[doc] || {})
     }
-  }
-  
-  private loadNonAutoloadTable(tableName: string) {
-    let thisTable = null;
-    (this.tables || []).forEach(table => {
-      if(table.name === tableName) thisTable = table;
-    });
-    if(thisTable) return this.loadData([thisTable]);
-  }
-
-  private loadData(tables: ITable[] = null): void {
-
-    // get data
-    (tables || this.tables || []).forEach(table => {
-      if(!tables && !table.autoload) return;
-      if((this.onTheFlyTracker||[]).indexOf(table.name) > -1) return;
-
-      // console.info('GO FLY -> '+ table.name +'[]');
-
-      // record data on the fly to avoid unneccesary actions
-      this.onTheFlyTracker = this.onTheFlyTracker || [];
-      this.onTheFlyTracker.push(table.name);
-
-      // go fly
-      setTimeout(() => {
-        this.spreadsheetGet({
-          id: this.CONFIG.database,
-          range: table.name +'!'+ (table.range || 'A1:ZZ')
-        }, table.name, table.key)
-        .then(data => {
-          this.database = this.database || {}; 
-          this.database[table.name] = data;
-
-          // notify the event
-          this.events.publish('appData:'+ table.name, data);
-
-          // remove data on the fly recorder
-          this.onTheFlyTracker.splice(this.onTheFlyTracker.indexOf('table.name'), 1);
-        }).catch(error => { return });
-      }, 100);
-
-    });
-
+    // list
+    let itemsArray = [];
+    for(let key in itemsObject) {
+      itemsArray.push(Object.assign({
+        $key: key
+      }, itemsObject[key]));
+    }
+    return this.filterResult(itemsArray, query);
   }
 
   private filterResult(items: any[], query: IDataQuery) {
@@ -280,7 +186,7 @@ export class SheetbaseService {
   /*
   * SPREAHSHEET
   * */
-  spreadsheetGet(
+  private spreadsheetGet(
     sheet: {id: string, range: string},
     dataType: string = null,
     keyField: string = null,
@@ -317,7 +223,7 @@ export class SheetbaseService {
     });
   }
 
-  private spreadsheetTransformValue(value) {
+  private spreadsheetTransformValue(value): any[] {
     let items = [],
       headers = value[0] || [];
 
@@ -345,7 +251,7 @@ export class SheetbaseService {
     });
   }
 
-  private spreadsheetTransformBatchValue(value) {
+  private spreadsheetTransformBatchValue(value): any[] {
     // round 1
     let base = this.spreadsheetTransformValue(value[0].values || []);
     let more = [];

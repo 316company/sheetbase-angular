@@ -1,6 +1,6 @@
 export default {
     input: 'dist/src/index.js',
-    external: ['@angular/core', '@angular/common/http', 'ionic-angular', 'rxjs', 'lodash'],
+    external: ['@angular/core', '@angular/common/http', 'rxjs', 'lodash'],
     output: {
         file: 'dist/bundles/sheetbase.umd.js',
         format: 'umd',
@@ -16,8 +16,7 @@ export default {
 			
             'rxjs': 'Rx',
             'lodash': '_',
-            '@angular/common/http': 'ng.common.http',
-            'ionic-angular': 'ionicAngular'
+            '@angular/common/http': 'ng.common.http'
         }
     }
 }

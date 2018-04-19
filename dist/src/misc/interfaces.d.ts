@@ -13,9 +13,3 @@ export interface IDataQuery {
     equalTo?: any;
     order?: string;
 }
-export interface ITable {
-    name: string;
-    range?: string;
-    autoload?: boolean;
-    key?: string;
-}

@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('lodash'), require('@angular/common/http'), require('ionic-angular'), require('rxjs')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'lodash', '@angular/common/http', 'ionic-angular', 'rxjs'], factory) :
-    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global._,global.ng.common.http,global.ionicAngular,global.Rx));
-}(this, (function (exports,core,lodash,http,ionicAngular,rxjs) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('lodash'), require('@angular/common/http'), require('rxjs')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'lodash', '@angular/common/http', 'rxjs'], factory) :
+    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global._,global.ng.common.http,global.Rx));
+}(this, (function (exports,core,lodash,http,rxjs) { 'use strict';
 
     var SheetbaseConfigService = new core.InjectionToken('SheetbaseConfig');
 
@@ -43,84 +43,34 @@
     };
 
     var SheetbaseService = /** @class */ (function () {
-        function SheetbaseService(ngZone, http$$1, events, CONFIG) {
+        function SheetbaseService(ngZone, http$$1, CONFIG) {
             this.ngZone = ngZone;
             this.http = http$$1;
-            this.events = events;
             this.CONFIG = CONFIG;
-            this.tables = [{ name: 'categories' }, { name: 'tags' }, { name: 'authors' }, { name: 'posts' }, { name: 'pages' }]; // default tables
         }
-        SheetbaseService.prototype.db = function () {
-            return {
-                id: this.CONFIG.database,
-                tables: this.tables || []
-            };
-        };
-        SheetbaseService.prototype.init = function () {
-            var _this = this;
-            this.spreadsheetGet({
-                id: this.CONFIG.database,
-                range: '__tables__!A1:C'
-            }, null, 'name', false)
-                .then(function (tables) {
-                _this.tables = tables;
-                _this.events.publish('appData:tables', tables);
-                _this.loadData(); // auto-load
-            })
-                .catch(function (error) { _this.init(); }); // retry
-        };
-        SheetbaseService.prototype.get = function (collection, doc, query, oneTime) {
+        SheetbaseService.prototype.get = function (collection, doc, query) {
             var _this = this;
             if (doc === void 0) { doc = null; }
             if (query === void 0) { query = null; }
-            if (oneTime === void 0) { oneTime = false; }
             return new rxjs.Observable(function (observer) {
-                _this.database = _this.database || {};
-                var itemsObject = _this.database[collection] || {};
-                if (!itemsObject || Object.keys(itemsObject).length < 1)
-                    _this.initNonAutoloadTable(collection);
-                // return current whatever data
-                // return current whatever data
-                if (doc) {
-                    observer.next(Object.assign({
-                        $key: doc
-                    }, itemsObject[doc] || {}));
-                    // event
-                    // event
-                    if (oneTime) {
+                var itemsObject = (_this.database || {})[collection] || {};
+                if (!itemsObject || Object.keys(itemsObject).length < 1) {
+                    _this.spreadsheetGet({
+                        id: _this.CONFIG.database,
+                        range: collection + '!A1:ZZ'
+                    }, collection)
+                        .then(function (data) {
+                        _this.database = _this.database || {};
+                        _this.database[collection] = data;
+                        observer.next(_this.returnData(collection, doc, query));
                         observer.complete();
-                    }
-                    else {
-                        // listen for change
-                        // listen for change
-                        _this.events.subscribe('appData:' + collection, function (eventData) {
-                            observer.next(Object.assign({
-                                $key: doc
-                            }, eventData[doc] || {}));
-                        });
-                    }
+                    }).catch(function (error) {
+                        return rxjs.Observable.throw(error);
+                    });
                 }
                 else {
-                    var itemsArray = [];
-                    for (var key in itemsObject) {
-                        itemsArray.push(Object.assign({
-                            $key: key
-                        }, itemsObject[key]));
-                    }
-                    observer.next(_this.filterResult(itemsArray, query));
-                    // event
-                    // event
-                    if (oneTime) {
-                        observer.complete();
-                    }
-                    else {
-                        // listen for change
-                        // listen for change
-                        _this.events.subscribe('appData:' + collection, function (eventData) {
-                            delete eventData.$key;
-                            observer.next(_this.filterResult(HELPER.o2a(eventData, true), query));
-                        });
-                    }
+                    observer.next(_this.returnData(collection, doc, query));
+                    observer.complete();
                 }
             });
         };
@@ -133,7 +83,7 @@
             return new Promise(function (resolve, reject) {
                 if (!_this.CONFIG.backend)
                     reject({
-                        message: 'No backend!'
+                        message: 'No backend found in the config file!'
                     });
                 // build uri
                 var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
@@ -177,60 +127,23 @@
                 }
             });
         };
-        SheetbaseService.prototype.initNonAutoloadTable = function (tableName) {
-            var _this = this;
-            if (!this.tables) {
-                this.events.subscribe('appData:tables', function (eventData) {
-                    _this.loadNonAutoloadTable(tableName);
-                });
+        SheetbaseService.prototype.returnData = function (collection, doc, query) {
+            var itemsObject = (this.database || {})[collection] || {};
+            // item
+            // item
+            if (doc) {
+                return Object.assign({
+                    $key: doc
+                }, itemsObject[doc] || {});
             }
-            else {
-                this.loadNonAutoloadTable(tableName);
+            // list
+            var itemsArray = [];
+            for (var key in itemsObject) {
+                itemsArray.push(Object.assign({
+                    $key: key
+                }, itemsObject[key]));
             }
-        };
-        SheetbaseService.prototype.loadNonAutoloadTable = function (tableName) {
-            var thisTable = null;
-            (this.tables || []).forEach(function (table) {
-                if (table.name === tableName)
-                    thisTable = table;
-            });
-            if (thisTable)
-                return this.loadData([thisTable]);
-        };
-        SheetbaseService.prototype.loadData = function (tables) {
-            var _this = this;
-            if (tables === void 0) { tables = null; }
-            // get data
-            // get data
-            (tables || this.tables || []).forEach(function (table) {
-                if (!tables && !table.autoload)
-                    return;
-                if ((_this.onTheFlyTracker || []).indexOf(table.name) > -1)
-                    return;
-                // console.info('GO FLY -> '+ table.name +'[]');
-                // record data on the fly to avoid unneccesary actions
-                // console.info('GO FLY -> '+ table.name +'[]');
-                // record data on the fly to avoid unneccesary actions
-                _this.onTheFlyTracker = _this.onTheFlyTracker || [];
-                _this.onTheFlyTracker.push(table.name);
-                // go fly
-                setTimeout(function () {
-                    _this.spreadsheetGet({
-                        id: _this.CONFIG.database,
-                        range: table.name + '!' + (table.range || 'A1:ZZ')
-                    }, table.name, table.key)
-                        .then(function (data) {
-                        _this.database = _this.database || {};
-                        _this.database[table.name] = data;
-                        // notify the event
-                        // notify the event
-                        _this.events.publish('appData:' + table.name, data);
-                        // remove data on the fly recorder
-                        // remove data on the fly recorder
-                        _this.onTheFlyTracker.splice(_this.onTheFlyTracker.indexOf('table.name'), 1);
-                    }).catch(function (error) { return; });
-                }, 100);
-            });
+            return this.filterResult(itemsArray, query);
         };
         SheetbaseService.prototype.filterResult = function (items, query) {
             query = query || {};
@@ -424,7 +337,6 @@
         SheetbaseService.ctorParameters = function () { return [
             { type: core.NgZone, },
             { type: http.HttpClient, },
-            { type: ionicAngular.Events, },
             { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
         ]; };
         return SheetbaseService;

@@ -1,32 +1,18 @@
 import { NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Events } from 'ionic-angular';
 import { Observable } from 'rxjs';
-import { IDataQuery, ITable } from '../misc/interfaces';
+import { IDataQuery } from '../misc/interfaces';
 export declare class SheetbaseService {
     private ngZone;
     private http;
-    private events;
     private CONFIG;
-    private tables;
     private database;
-    private onTheFlyTracker;
-    constructor(ngZone: NgZone, http: HttpClient, events: Events, CONFIG: any);
-    db(): {
-        id: any;
-        tables: ITable[];
-    };
-    init(): any;
-    get(collection: string, doc?: string, query?: IDataQuery, oneTime?: boolean): Observable<any>;
+    constructor(ngZone: NgZone, http: HttpClient, CONFIG: any);
+    get(collection: string, doc?: string, query?: IDataQuery): Observable<any>;
     api(method?: string, endpoint?: string, params?: any, body?: any): Promise<any>;
-    private initNonAutoloadTable(tableName);
-    private loadNonAutoloadTable(tableName);
-    private loadData(tables?);
+    private returnData(collection, doc, query);
     private filterResult(items, query);
-    spreadsheetGet(sheet: {
-        id: string;
-        range: string;
-    }, dataType?: string, keyField?: string, returnObject?: boolean): Promise<any>;
+    private spreadsheetGet(sheet, dataType?, keyField?, returnObject?);
     private spreadsheetLoad(id, range);
     private spreadsheetTransformValue(value);
     private spreadsheetLoadBatch(id, ranges);
