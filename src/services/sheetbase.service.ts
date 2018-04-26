@@ -2,6 +2,9 @@ import { Injectable, Inject, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import * as PubSub from 'pubsub-js';
+import * as localforage from 'localforage';
+
 import { SheetbaseConfigService } from './sheetbase-config.service';
 
 import { IDataQuery } from '../misc/interfaces';
@@ -15,6 +18,9 @@ export class SheetbaseService {
     [collection: string]: any
   };
 
+  private user: any;
+  private token: string;
+
   constructor(
     private ngZone: NgZone,
     private http: HttpClient,
@@ -23,39 +29,60 @@ export class SheetbaseService {
   ) {
   }
 
+
+  /**
+   * Get data
+   * @param collection 
+   * @param doc 
+   * @param query 
+   */
   get(
     collection: string,
     doc: string = null,
     query: IDataQuery = null
   ): Observable<any> {
     return new Observable(observer => {
-      let itemsObject = (this.database||{})[collection] || {};
-      if(!itemsObject || Object.keys(itemsObject).length < 1) {
-        this.spreadsheetGet({
-          id: this.CONFIG.database,
-          range: collection +'!A1:ZZ'
-        }, collection)
-        .then(data => {
-          this.database = this.database || {};
-          this.database[collection] = data;
-
-          observer.next(this.returnData(collection, doc, query));
-          observer.complete();
-        }).catch(error => {
-          return Observable.throw(error);
-        });
-      } else {
+      let itemsObject = (this.database||{})[collection];
+      
+      // return data
+      if(itemsObject && Object.keys(itemsObject).length < 1) {
         observer.next(this.returnData(collection, doc, query));
         observer.complete();
       }
+      this.spreadsheetGet({
+        id: this.CONFIG.database,
+        range: collection +'!A1:ZZ'
+      }, collection)
+      .then(data => {
+        this.ngZone.run(() => {
+          if(!this.database) this.database = {};
+          this.database[collection] = data;
+        });
+
+        observer.next(this.returnData(collection, doc, query));
+        observer.complete();
+      }).catch(error => { return });
     });
   }
 
-  api(method: string = 'GET', endpoint: string = null, params: any = {}, body: any = {}): Promise<any> {
+  /**
+   * Api
+   * @param method 
+   * @param endpoint 
+   * @param params 
+   * @param body 
+   */
+  api(
+    method: string = 'GET',
+    endpoint: string = null,
+    params: any = {},
+    body: any = {}
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
-      if(!this.CONFIG.backend) reject({
-        message: 'No backend found in the config file!'
-      });
+      if(!this.CONFIG.backend) {
+        console.error('[Error][Sheetbase] No backend for this project!');
+        reject(null);
+      }
 
       // build uri
       let uri: string = 'https://script.google.com/macros/s/'+ this.CONFIG.backend +'/exec';
@@ -71,6 +98,7 @@ export class SheetbaseService {
         body = Object.assign({}, body, {
           apiKey: this.CONFIG.apiKey
         });
+        if(this.token) body.token = this.token;
         this.http.post<any>(uri, JSON.stringify(body), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -85,6 +113,7 @@ export class SheetbaseService {
         } else {
           uri += '&apiKey='+ this.CONFIG.apiKey;
         }
+        if(this.token) uri += '&token='+ this.token;
         this.http.get<any>(uri).subscribe(data => {
           if(data.error) reject(data);
           resolve(data);        
@@ -94,11 +123,152 @@ export class SheetbaseService {
   }
 
 
+  onAuthStateChanged(): Observable<any> {
+    return new Observable(observer => {
+      localforage.getItem<any>('sheetbaseAuthData')
+      .then(data => {
+
+        // save data
+        this.ngZone.run(() => {
+          this.user = data.user;
+          this.token = data.token;
+        });
+
+        observer.next(data ? data.user: null);
+      }).catch(error => {
+        observer.next(null);
+      });
+
+      PubSub.subscribe('SHEETBASE_AUTH_STATE_CHANGED', (msg, data) => {
+        observer.next(data ? data.user: null);
+      });
+    });
+  }
+
+  createUserWithEmailAndPassword(email: string, password: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.api('POST', 'user/create', {},
+        {
+          credential: {
+            email,
+            password
+          }
+        }
+      ).then(response => {
+        if(response.error) reject(response);
+        if(!response.token) {
+          console.error('[Error][Sheetbase][User] No auth endpoint user/create found in backend!');
+          reject(null);
+        }
+
+        // save data
+        this.ngZone.run(() => {
+          this.user = response.user;
+          this.token = response.token;
+        });
+
+        localforage.setItem('sheetbaseAuthData', response)
+        .then(() => {return})
+        .catch(error => {return});
+
+        PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
+        resolve(response);
+      }).catch(reject);
+    });
+  }
+
+  loginWithEmailAndPassword(email: string, password: string) {
+    return new Promise((resolve, reject) => {
+      if(this.user) resolve({
+        token: this.token,
+        user: this.user
+      });
+
+      this.api('POST', 'user/login', {},
+        {
+          credential: {
+            email,
+            password
+          }
+        }
+      ).then(response => {
+        if(response.error) reject(response);
+        if(!response.token) {
+          console.error('[Error][Sheetbase][User] No auth endpoint user/login found in backend!');
+          reject(null);
+        }
+
+        // save data
+        this.ngZone.run(() => {
+          this.user = response.user;
+          this.token = response.token;
+        });
+
+        localforage.setItem('sheetbaseAuthData', response)
+        .then(() => {return})
+        .catch(error => {return});
+
+        PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
+        resolve(response);
+      }).catch(reject);
+    });
+  }
+
+  signOut(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.user = null;
+      this.token = null;
+
+      localforage.removeItem('sheetbaseAuthData')
+      .then(() => {return})
+      .catch(error => {return});
+
+      PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', null);
+      resolve(null);
+    });
+  }
+
+  updateProfile(profileData: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.api('POST', 'user/profile', {},
+        {
+          profileData
+        }
+      ).then(response => {
+        if(response.error) reject(response);
+        if(!response.user) {
+          console.error('[Error][Sheetbase][User] No auth endpoint user/profile found in backend!');
+          reject(null);
+        }
+
+        // save data
+        this.ngZone.run(() => {
+          this.user = response.user;
+        });
+
+        localforage.setItem('sheetbaseAuthData', {
+          token: this.token,
+          user: response.user
+        })
+        .then(() => {return})
+        .catch(error => {return});
+
+        PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
+        resolve(response.user);
+      }).catch(reject);
+    });
+  }
 
 
 
 
 
+  /**
+   * 
+   * @param collection 
+   * @param doc 
+   * @param query 
+   */
   private returnData(collection, doc, query) {
     let itemsObject = (this.database||{})[collection] || {};
     // item
@@ -313,7 +483,7 @@ export class SheetbaseService {
 
       // transform array to object
       itemsObject = itemsObject || {};
-      itemsObject[keyField ? item[keyField]: (item.key || item.slug || (''+ item.id))] = item;
+      itemsObject[keyField ? item[keyField]: (item['key'] || item['slug'] || (''+ item['id']) || (''+ item['#']) || (''+ Math.random()*1E20))] = item;
       itemsArray = itemsArray || [];
       itemsArray.push(item);
     });

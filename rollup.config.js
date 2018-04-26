@@ -1,6 +1,13 @@
 export default {
     input: 'dist/src/index.js',
-    external: ['@angular/core', '@angular/common/http', 'rxjs', 'lodash'],
+    external: [
+		'@angular/core',
+		'@angular/common/http',
+		'rxjs',
+		'lodash',
+		'pubsub-js',
+		'localforage'
+	],
     output: {
         file: 'dist/bundles/sheetbase.umd.js',
         format: 'umd',
@@ -12,11 +19,7 @@ export default {
             'rxjs/add/operator/map': 'Rx.Observable.prototype',
             'rxjs/add/operator/mergeMap': 'Rx.Observable.prototype',
             'rxjs/add/observable/fromEvent': 'Rx.Observable',
-            'rxjs/add/observable/of': 'Rx.Observable',
-			
-            'rxjs': 'Rx',
-            'lodash': '_',
-            '@angular/common/http': 'ng.common.http'
+            'rxjs/add/observable/of': 'Rx.Observable'
         }
     }
 }
