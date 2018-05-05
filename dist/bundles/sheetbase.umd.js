@@ -190,12 +190,12 @@
             if (endpoint === void 0) { endpoint = null; }
             if (params === void 0) { params = {}; }
             return new Promise(function (resolve, reject) {
-                if (!_this.CONFIG.backend) {
+                if (!_this.CONFIG.backendUrl) {
                     console.error('[Error][Sheetbase] No backend for this project!');
-                    reject(null);
+                    return reject(null);
                 }
                 // build uri
-                var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
+                var uri = _this.CONFIG.backendUrl;
                 if (endpoint)
                     uri += '?e=' + endpoint;
                 if (!endpoint && Object.keys(params || {}).length > 0)
@@ -217,7 +217,7 @@
                     uri += '&token=' + _this.userDataService.token;
                 _this.http.get(uri).subscribe(function (data) {
                     if (data.error)
-                        reject(data);
+                        return reject(data);
                     resolve(data);
                 }, reject);
             });
@@ -246,12 +246,12 @@
             if (params === void 0) { params = {}; }
             if (body === void 0) { body = {}; }
             return new Promise(function (resolve, reject) {
-                if (!_this.CONFIG.backend) {
+                if (!_this.CONFIG.backendUrl) {
                     console.error('[Error][Sheetbase] No backend for this project!');
-                    reject(null);
+                    return reject(null);
                 }
                 // build uri
-                var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
+                var uri = _this.CONFIG.backendUrl;
                 if (endpoint)
                     uri += '?e=' + endpoint;
                 if (!endpoint && Object.keys(params || {}).length > 0)
@@ -273,7 +273,7 @@
                     }
                 }).subscribe(function (data) {
                     if (data.error)
-                        reject(data);
+                        return reject(data);
                     resolve(data);
                 }, reject);
             });
@@ -358,21 +358,23 @@
                 var itemsObject = (_this.database || {})[collection];
                 // return data
                 // return data
-                if (itemsObject && Object.keys(itemsObject).length < 1) {
+                if (itemsObject && Object.keys(itemsObject).length > 0) {
                     observer.next(_this.returnData(collection, doc, query));
                     observer.complete();
                 }
                 _this.apiService.GET('/data', {
                     table: collection
-                }).then(function (data) {
+                }).then(function (response) {
                     _this.ngZone.run(function () {
                         if (!_this.database)
                             _this.database = {};
-                        _this.database[collection] = _this.modifyValue(data, collection);
+                        _this.database[collection] = _this.modifyValue(response.data, collection);
                     });
                     observer.next(_this.returnData(collection, doc, query));
                     observer.complete();
-                }).catch(function (error) { return; });
+                }).catch(function (error) {
+                    return rxjs.Observable.throw(error);
+                });
             });
         };
         /**
@@ -516,6 +518,8 @@
         UserService.prototype.createUserWithEmailAndPassword = function (email, password) {
             var _this = this;
             return new Promise(function (resolve, reject) {
+                if (!email || !password)
+                    return reject('Missing email or password!');
                 _this.apiService.POST('/user/create', {}, {
                     credential: {
                         email: email,
@@ -523,21 +527,17 @@
                     }
                 }).then(function (response) {
                     if (response.error)
-                        reject(response);
-                    if (!response.token) {
-                        console.error('[Error][Sheetbase][User] No auth endpoint user/create found in backend!');
-                        reject(null);
-                    }
+                        return reject(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
-                        _this.userDataService.user = response.user;
-                        _this.userDataService.token = response.token;
+                        _this.userDataService.user = response.data.user;
+                        _this.userDataService.token = response.data.token;
                     });
-                    localforage.setItem('sheetbaseAuthData', response)
+                    localforage.setItem('sheetbaseAuthData', response.data)
                         .then(function () { return; })
                         .catch(function (error) { return; });
-                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
+                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
                     resolve(response);
                 }).catch(reject);
             });
@@ -545,6 +545,8 @@
         UserService.prototype.loginWithEmailAndPassword = function (email, password) {
             var _this = this;
             return new Promise(function (resolve, reject) {
+                if (!email || !password)
+                    return reject('Missing email or password!');
                 if (_this.userDataService.user)
                     resolve({
                         token: _this.userDataService.token,
@@ -557,21 +559,17 @@
                     }
                 }).then(function (response) {
                     if (response.error)
-                        reject(response);
-                    if (!response.token) {
-                        console.error('[Error][Sheetbase][User] No auth endpoint user/login found in backend!');
-                        reject(null);
-                    }
+                        return reject(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
-                        _this.userDataService.user = response.user;
-                        _this.userDataService.token = response.token;
+                        _this.userDataService.user = response.data.user;
+                        _this.userDataService.token = response.data.token;
                     });
-                    localforage.setItem('sheetbaseAuthData', response)
+                    localforage.setItem('sheetbaseAuthData', response.data)
                         .then(function () { return; })
                         .catch(function (error) { return; });
-                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
+                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
                     resolve(response);
                 }).catch(reject);
             });
@@ -588,31 +586,74 @@
                 resolve(null);
             });
         };
-        UserService.prototype.updateProfile = function (profileData) {
+        UserService.prototype.updateProfile = function (profile) {
             var _this = this;
             return new Promise(function (resolve, reject) {
+                if (!profile || !(profile instanceof Object))
+                    return reject('Invalid profile data.');
+                if (!_this.userDataService.user || !_this.userDataService.token)
+                    return reject('Please login first!');
                 _this.apiService.POST('/user/profile', {}, {
-                    profileData: profileData
+                    profile: profile
                 }).then(function (response) {
                     if (response.error)
-                        reject(response);
-                    if (!response.user) {
-                        console.error('[Error][Sheetbase][User] No auth endpoint user/profile found in backend!');
-                        reject(null);
-                    }
+                        return reject(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
-                        _this.userDataService.user = response.user;
+                        _this.userDataService.user = response.data.user;
                     });
                     localforage.setItem('sheetbaseAuthData', {
                         token: _this.userDataService.token,
-                        user: response.user
+                        user: response.data.user
                     })
                         .then(function () { return; })
                         .catch(function (error) { return; });
-                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response);
-                    resolve(response.user);
+                    PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
+                    resolve(response.data.user);
+                }).catch(reject);
+            });
+        };
+        UserService.prototype.resetPasswordEmail = function (email) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                if (!email)
+                    return reject('Missing email!');
+                _this.apiService.POST('/auth/reset-password', {}, {
+                    email: email
+                }).then(function (response) {
+                    if (response.error)
+                        return reject(response);
+                    resolve(response);
+                }).catch(reject);
+            });
+        };
+        UserService.prototype.setPassword = function (oobCode, password) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                if (!oobCode || !password)
+                    return reject('Missing oobCode or password!');
+                _this.apiService.POST('/auth/set-password', {}, {
+                    oobCode: oobCode,
+                    password: password
+                }).then(function (response) {
+                    if (response.error)
+                        return reject(response);
+                    resolve(response);
+                }).catch(reject);
+            });
+        };
+        UserService.prototype.verifyCode = function (oobCode) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                if (!oobCode)
+                    return reject('Missing oobCode!');
+                _this.apiService.POST('/auth/verify-code', {}, {
+                    oobCode: oobCode
+                }).then(function (response) {
+                    if (response.error)
+                        return reject(response);
+                    resolve(response);
                 }).catch(reject);
             });
         };
@@ -642,23 +683,33 @@
         // TODO: https://xkeshi.github.io/image-compressor/
         FileService.prototype.upload = 
         // TODO: https://xkeshi.github.io/image-compressor/
-        function (file, customFolder) {
+        function (appFile, customFolder) {
             var _this = this;
             if (customFolder === void 0) { customFolder = null; }
             return new rxjs.Observable(function (observer) {
+                var body = {
+                    file: Object.assign(_this.base64Breakdown(appFile.base64), {
+                        name: appFile.name
+                    })
+                };
+                if (customFolder)
+                    body.folder = customFolder;
+                _this.apiService.POST('/file', {}, body)
+                    .then(function (response) {
+                    observer.next(response);
+                    observer.complete();
+                });
+            });
+        };
+        FileService.prototype.load = function (file) {
+            return new Promise(function (resolve, reject) {
                 var reader = new FileReader();
                 reader.onload = function (e) {
-                    var body = {
-                        file: Object.assign(_this.base64Breakdown(e.target.result), {
-                            name: file.name
-                        })
-                    };
-                    if (customFolder)
-                        body.folder = customFolder;
-                    _this.apiService.POST('/file', {}, body)
-                        .then(function (response) {
-                        observer.next(response);
-                        observer.complete();
+                    resolve({
+                        name: file.name,
+                        size: file.size,
+                        mimeType: file.type,
+                        base64: e.target.result
                     });
                 };
                 reader.readAsDataURL(file);
@@ -685,13 +736,13 @@
     var SheetbaseModule = /** @class */ (function () {
         function SheetbaseModule() {
         }
-        SheetbaseModule.forRoot = function (config) {
+        SheetbaseModule.forRoot = function (sheetbaseConfig) {
             return {
                 ngModule: SheetbaseModule,
                 providers: [
                     {
                         provide: SheetbaseConfigService,
-                        useValue: config
+                        useValue: sheetbaseConfig
                     },
                     SpreadsheetService,
                     DataService,

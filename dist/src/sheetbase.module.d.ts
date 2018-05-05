@@ -1,5 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
-import { IConfig } from './misc/interfaces';
+import { ISheetbaseConfig } from './misc/interfaces';
 export declare class SheetbaseModule {
-    static forRoot(config: IConfig): ModuleWithProviders;
+    static forRoot(sheetbaseConfig: ISheetbaseConfig): ModuleWithProviders;
 }

@@ -35,21 +35,23 @@ var DataService = /** @class */ (function () {
             var itemsObject = (_this.database || {})[collection];
             // return data
             // return data
-            if (itemsObject && Object.keys(itemsObject).length < 1) {
+            if (itemsObject && Object.keys(itemsObject).length > 0) {
                 observer.next(_this.returnData(collection, doc, query));
                 observer.complete();
             }
             _this.apiService.GET('/data', {
                 table: collection
-            }).then(function (data) {
+            }).then(function (response) {
                 _this.ngZone.run(function () {
                     if (!_this.database)
                         _this.database = {};
-                    _this.database[collection] = _this.modifyValue(data, collection);
+                    _this.database[collection] = _this.modifyValue(response.data, collection);
                 });
                 observer.next(_this.returnData(collection, doc, query));
                 observer.complete();
-            }).catch(function (error) { return; });
+            }).catch(function (error) {
+                return Observable.throw(error);
+            });
         });
     };
     /**

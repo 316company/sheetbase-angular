@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { UserDataService } from './user-data.service';
+import { IAppHTTPResponse } from '../misc/interfaces';
 export declare class ApiService {
     private http;
     private CONFIG;
@@ -10,12 +11,12 @@ export declare class ApiService {
      * @param endpoint
      * @param params
      */
-    GET(endpoint?: string, params?: any): Promise<any>;
+    GET(endpoint?: string, params?: any): Promise<IAppHTTPResponse>;
     /**
      * POST
      * @param endpoint
      * @param params
      * @param body
      */
-    POST(endpoint?: string, params?: any, body?: any): Promise<any>;
+    POST(endpoint?: string, params?: any, body?: any): Promise<IAppHTTPResponse>;
 }

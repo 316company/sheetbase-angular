@@ -13,5 +13,8 @@ export declare class UserService {
     createUserWithEmailAndPassword(email: string, password: string): Promise<any>;
     loginWithEmailAndPassword(email: string, password: string): Promise<{}>;
     signOut(): Promise<any>;
-    updateProfile(profileData: any): Promise<any>;
+    updateProfile(profile: any): Promise<any>;
+    resetPasswordEmail(email: string): Promise<any>;
+    setPassword(oobCode: string, password: string): Promise<any>;
+    verifyCode(oobCode: string): Promise<any>;
 }

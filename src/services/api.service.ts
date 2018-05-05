@@ -5,6 +5,8 @@ import { SheetbaseConfigService } from './sheetbase-config.service';
 
 import { UserDataService } from './user-data.service';
 
+import { IAppHTTPResponse } from '../misc/interfaces';
+
 @Injectable()
 export class ApiService {
 
@@ -24,16 +26,16 @@ export class ApiService {
   GET(
     endpoint: string = null,
     params: any = {}
-  ): Promise<any> {
+  ): Promise<IAppHTTPResponse> {
     return new Promise((resolve, reject) => {
 
-      if(!this.CONFIG.backend) {
+      if(!this.CONFIG.backendUrl) {
         console.error('[Error][Sheetbase] No backend for this project!');
-        reject(null);
+        return reject(null);
       }
 
       // build uri
-      let uri: string = 'https://script.google.com/macros/s/'+ this.CONFIG.backend +'/exec';
+      let uri: string = this.CONFIG.backendUrl;
       if(endpoint) uri += '?e='+ endpoint;
       if(!endpoint && Object.keys(params||{}).length > 0) uri += '?';
       for(let key in (params||{})) {
@@ -48,8 +50,8 @@ export class ApiService {
         uri += '&apiKey='+ this.CONFIG.apiKey;
       }
       if(this.userDataService.token) uri += '&token='+ this.userDataService.token;
-      this.http.get<any>(uri).subscribe(data => {
-        if(data.error) reject(data);
+      this.http.get<IAppHTTPResponse>(uri).subscribe(data => {
+        if(data.error) return reject(data);
         resolve(data);        
       }, reject);
     });
@@ -65,15 +67,15 @@ export class ApiService {
     endpoint: string = null,
     params: any = {},
     body: any = {}
-  ): Promise<any> {
+  ): Promise<IAppHTTPResponse> {
     return new Promise((resolve, reject) => {
-      if(!this.CONFIG.backend) {
+      if(!this.CONFIG.backendUrl) {
         console.error('[Error][Sheetbase] No backend for this project!');
-        reject(null);
+        return reject(null);
       }
 
       // build uri
-      let uri: string = 'https://script.google.com/macros/s/'+ this.CONFIG.backend +'/exec';
+      let uri: string = this.CONFIG.backendUrl;
       if(endpoint) uri += '?e='+ endpoint;
       if(!endpoint && Object.keys(params||{}).length > 0) uri += '?';
       for(let key in (params||{})) {
@@ -86,12 +88,12 @@ export class ApiService {
         apiKey: this.CONFIG.apiKey
       });
       if(this.userDataService.token) body.token = this.userDataService.token;
-      this.http.post<any>(uri, JSON.stringify(body), {
+      this.http.post<IAppHTTPResponse>(uri, JSON.stringify(body), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }).subscribe(data => {
-        if(data.error) reject(data);
+        if(data.error) return reject(data);
         resolve(data);
       }, reject);
     });

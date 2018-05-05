@@ -28,12 +28,12 @@ var ApiService = /** @class */ (function () {
         if (endpoint === void 0) { endpoint = null; }
         if (params === void 0) { params = {}; }
         return new Promise(function (resolve, reject) {
-            if (!_this.CONFIG.backend) {
+            if (!_this.CONFIG.backendUrl) {
                 console.error('[Error][Sheetbase] No backend for this project!');
-                reject(null);
+                return reject(null);
             }
             // build uri
-            var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
+            var uri = _this.CONFIG.backendUrl;
             if (endpoint)
                 uri += '?e=' + endpoint;
             if (!endpoint && Object.keys(params || {}).length > 0)
@@ -55,7 +55,7 @@ var ApiService = /** @class */ (function () {
                 uri += '&token=' + _this.userDataService.token;
             _this.http.get(uri).subscribe(function (data) {
                 if (data.error)
-                    reject(data);
+                    return reject(data);
                 resolve(data);
             }, reject);
         });
@@ -84,12 +84,12 @@ var ApiService = /** @class */ (function () {
         if (params === void 0) { params = {}; }
         if (body === void 0) { body = {}; }
         return new Promise(function (resolve, reject) {
-            if (!_this.CONFIG.backend) {
+            if (!_this.CONFIG.backendUrl) {
                 console.error('[Error][Sheetbase] No backend for this project!');
-                reject(null);
+                return reject(null);
             }
             // build uri
-            var uri = 'https://script.google.com/macros/s/' + _this.CONFIG.backend + '/exec';
+            var uri = _this.CONFIG.backendUrl;
             if (endpoint)
                 uri += '?e=' + endpoint;
             if (!endpoint && Object.keys(params || {}).length > 0)
@@ -111,7 +111,7 @@ var ApiService = /** @class */ (function () {
                 }
             }).subscribe(function (data) {
                 if (data.error)
-                    reject(data);
+                    return reject(data);
                 resolve(data);
             }, reject);
         });

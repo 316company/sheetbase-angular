@@ -1,0 +1,1 @@
+[{"__symbolic":"module","version":4,"metadata":{"OptionalConfigService":{"__symbolic":"new","expression":{"__symbolic":"reference","module":"@angular/core","name":"InjectionToken","line":4,"character":41},"arguments":["OptionalConfig"]}}}]

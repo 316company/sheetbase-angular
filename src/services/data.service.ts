@@ -39,21 +39,22 @@ export class DataService {
       let itemsObject = (this.database||{})[collection];
       
       // return data
-      if(itemsObject && Object.keys(itemsObject).length < 1) {
+      if(itemsObject && Object.keys(itemsObject).length > 0) {
         observer.next(this.returnData(collection, doc, query));
         observer.complete();
       }
       this.apiService.GET('/data', {
         table: collection
-      }).then(data => {
+      }).then(response => {
         this.ngZone.run(() => {
           if(!this.database) this.database = {};
-          this.database[collection] = this.modifyValue(data, collection);
+          this.database[collection] = this.modifyValue(response.data, collection);
         });
-
         observer.next(this.returnData(collection, doc, query));
         observer.complete();
-      }).catch(error => { return });
+      }).catch(error => {
+        return Observable.throw(error);
+      });
     });
   }
 

@@ -15,23 +15,33 @@ var FileService = /** @class */ (function () {
     // TODO: https://xkeshi.github.io/image-compressor/
     FileService.prototype.upload = 
     // TODO: https://xkeshi.github.io/image-compressor/
-    function (file, customFolder) {
+    function (appFile, customFolder) {
         var _this = this;
         if (customFolder === void 0) { customFolder = null; }
         return new Observable(function (observer) {
+            var body = {
+                file: Object.assign(_this.base64Breakdown(appFile.base64), {
+                    name: appFile.name
+                })
+            };
+            if (customFolder)
+                body.folder = customFolder;
+            _this.apiService.POST('/file', {}, body)
+                .then(function (response) {
+                observer.next(response);
+                observer.complete();
+            });
+        });
+    };
+    FileService.prototype.load = function (file) {
+        return new Promise(function (resolve, reject) {
             var reader = new FileReader();
             reader.onload = function (e) {
-                var body = {
-                    file: Object.assign(_this.base64Breakdown(e.target.result), {
-                        name: file.name
-                    })
-                };
-                if (customFolder)
-                    body.folder = customFolder;
-                _this.apiService.POST('/file', {}, body)
-                    .then(function (response) {
-                    observer.next(response);
-                    observer.complete();
+                resolve({
+                    name: file.name,
+                    size: file.size,
+                    mimeType: file.type,
+                    base64: e.target.result
                 });
             };
             reader.readAsDataURL(file);

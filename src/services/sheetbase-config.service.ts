@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
 
-import { IConfig } from '../misc/interfaces';
+import { ISheetbaseConfig, ISheetbaseConfigLite } from '../misc/interfaces';
 
-export const SheetbaseConfigService = new InjectionToken<IConfig>('SheetbaseConfig');
+export const SheetbaseConfigService = new InjectionToken<ISheetbaseConfig|ISheetbaseConfigLite>('SheetbaseConfig');

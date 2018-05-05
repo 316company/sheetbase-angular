@@ -9,13 +9,13 @@ import { FileService } from './services/file.service';
 var SheetbaseModule = /** @class */ (function () {
     function SheetbaseModule() {
     }
-    SheetbaseModule.forRoot = function (config) {
+    SheetbaseModule.forRoot = function (sheetbaseConfig) {
         return {
             ngModule: SheetbaseModule,
             providers: [
                 {
                     provide: SheetbaseConfigService,
-                    useValue: config
+                    useValue: sheetbaseConfig
                 },
                 SpreadsheetService,
                 DataService,
