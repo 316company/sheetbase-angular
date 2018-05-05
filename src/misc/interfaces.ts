@@ -5,7 +5,7 @@ export interface ISheetbaseConfig {
 }
 export interface ISheetbaseConfigLite {
     googleApiKey: string,
-    database: string
+    databaseId: string
 }
 
 export interface IDataQuery {
@@ -25,3 +25,10 @@ export interface IAppHTTPResponse {
     meta?: any,
     data?: any
 }
+
+export interface IAppFile {
+    name: string,
+    size: number,
+    mimeType: string,
+    base64: string
+  }

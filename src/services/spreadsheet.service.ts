@@ -15,9 +15,24 @@ export class SpreadsheetService {
   }
 
   get(
+    rangeA1: string = 'A1:ZZ',
+    tableName: string = null,
+    keyField: string = null,
+    returnObject: boolean = true
+  ): Promise<any> {
+    return this.getData(
+      this.CONFIG.databaseId,
+      rangeA1,
+      tableName,
+      keyField,
+      returnObject
+    );
+  }
+
+  getData(
     spreadsheetId: string,
-    rangeA1: string,
-    dataType: string = null,
+    rangeA1: string = 'A1:ZZ',
+    tableName: string = null,
     keyField: string = null,
     returnObject: boolean = true
   ): Promise<any> {
@@ -25,7 +40,7 @@ export class SpreadsheetService {
       if(rangeA1.indexOf(',') < 0) {
         this.load(spreadsheetId, rangeA1)
         .then(value => this.ngZone.run(() => {          
-          resolve(this.modifyValue(value, dataType, keyField, returnObject));
+          resolve(this.modifyValue(value, tableName, keyField, returnObject));
         }))
         .catch(reject);
       } else {
@@ -35,7 +50,7 @@ export class SpreadsheetService {
         });
         this.loadBatch(spreadsheetId, rangeStr)
         .then(value => this.ngZone.run(() => {
-          resolve(this.modifyValue(value, dataType, keyField, returnObject));
+          resolve(this.modifyValue(value, tableName, keyField, returnObject));
         }))
         .catch(reject);
       }
@@ -106,12 +121,12 @@ export class SpreadsheetService {
 
   private modifyValue(
     value: any,
-    dataType: string,
+    tableName: string,
     keyField: string,
     returnObject: boolean
   ): any {
     let customModifier = (item, tools: any = {}) => { return item };
-    if(dataType && this.CONFIG.modifiers && this.CONFIG.modifiers[dataType]) customModifier = this.CONFIG.modifiers[dataType]; 
+    if(tableName && this.CONFIG.modifiers && this.CONFIG.modifiers[tableName]) customModifier = this.CONFIG.modifiers[tableName]; 
 
     let itemsObject = null;
     let itemsArray = null;

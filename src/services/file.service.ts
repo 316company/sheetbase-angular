@@ -3,12 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 
-export interface IAppFile {
-  name: string,
-  size: number,
-  mimeType: string,
-  base64: string
-}
+import { IAppFile } from '../misc/interfaces';
 
 @Injectable()
 export class FileService {

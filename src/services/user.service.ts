@@ -108,7 +108,7 @@ export class UserService {
     });
   }
 
-  signOut(): Promise<any> {
+  logout(): Promise<any> {
     return new Promise((resolve, reject) => {
       this.userDataService.user = null;
       this.userDataService.token = null;
