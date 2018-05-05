@@ -1,5 +1,4 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
 import { HELPER } from '../misc/helper';
@@ -31,13 +30,12 @@ var DataService = /** @class */ (function () {
         var _this = this;
         if (doc === void 0) { doc = null; }
         if (query === void 0) { query = null; }
-        return new Observable(function (observer) {
+        return new Promise(function (resolve, reject) {
             var itemsObject = (_this.database || {})[collection];
             // return data
             // return data
             if (itemsObject && Object.keys(itemsObject).length > 0) {
-                observer.next(_this.returnData(collection, doc, query));
-                observer.complete();
+                resolve(_this.returnData(collection, doc, query));
             }
             _this.apiService.GET('/data', {
                 table: collection
@@ -47,10 +45,7 @@ var DataService = /** @class */ (function () {
                         _this.database = {};
                     _this.database[collection] = _this.modifyValue(response.data, collection);
                 });
-                observer.next(_this.returnData(collection, doc, query));
-                observer.complete();
-            }).catch(function (error) {
-                return Observable.throw(error);
+                resolve(_this.returnData(collection, doc, query));
             });
         });
     };

@@ -12,9 +12,17 @@
             this.http = http$$1;
             this.CONFIG = CONFIG;
         }
-        SpreadsheetService.prototype.get = function (spreadsheetId, rangeA1, dataType, keyField, returnObject) {
+        SpreadsheetService.prototype.get = function (rangeA1, tableName, keyField, returnObject) {
+            if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
+            if (tableName === void 0) { tableName = null; }
+            if (keyField === void 0) { keyField = null; }
+            if (returnObject === void 0) { returnObject = true; }
+            return this.getData(this.CONFIG.databaseId, rangeA1, tableName, keyField, returnObject);
+        };
+        SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, tableName, keyField, returnObject) {
             var _this = this;
-            if (dataType === void 0) { dataType = null; }
+            if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
+            if (tableName === void 0) { tableName = null; }
             if (keyField === void 0) { keyField = null; }
             if (returnObject === void 0) { returnObject = true; }
             return new Promise(function (resolve, reject) {
@@ -22,7 +30,7 @@
                     _this.load(spreadsheetId, rangeA1)
                         .then(function (value) {
                         return _this.ngZone.run(function () {
-                            resolve(_this.modifyValue(value, dataType, keyField, returnObject));
+                            resolve(_this.modifyValue(value, tableName, keyField, returnObject));
                         });
                     })
                         .catch(reject);
@@ -35,7 +43,7 @@
                     _this.loadBatch(spreadsheetId, rangeStr_1)
                         .then(function (value) {
                         return _this.ngZone.run(function () {
-                            resolve(_this.modifyValue(value, dataType, keyField, returnObject));
+                            resolve(_this.modifyValue(value, tableName, keyField, returnObject));
                         });
                     })
                         .catch(reject);
@@ -96,13 +104,13 @@
             });
             return final;
         };
-        SpreadsheetService.prototype.modifyValue = function (value, dataType, keyField, returnObject) {
+        SpreadsheetService.prototype.modifyValue = function (value, tableName, keyField, returnObject) {
             var customModifier = function (item, tools) {
                 if (tools === void 0) { tools = {}; }
                 return item;
             };
-            if (dataType && this.CONFIG.modifiers && this.CONFIG.modifiers[dataType])
-                customModifier = this.CONFIG.modifiers[dataType];
+            if (tableName && this.CONFIG.modifiers && this.CONFIG.modifiers[tableName])
+                customModifier = this.CONFIG.modifiers[tableName];
             var itemsObject = null;
             var itemsArray = null;
             (value || []).forEach(function (item) {
@@ -354,13 +362,12 @@
             var _this = this;
             if (doc === void 0) { doc = null; }
             if (query === void 0) { query = null; }
-            return new rxjs.Observable(function (observer) {
+            return new Promise(function (resolve, reject) {
                 var itemsObject = (_this.database || {})[collection];
                 // return data
                 // return data
                 if (itemsObject && Object.keys(itemsObject).length > 0) {
-                    observer.next(_this.returnData(collection, doc, query));
-                    observer.complete();
+                    resolve(_this.returnData(collection, doc, query));
                 }
                 _this.apiService.GET('/data', {
                     table: collection
@@ -370,10 +377,7 @@
                             _this.database = {};
                         _this.database[collection] = _this.modifyValue(response.data, collection);
                     });
-                    observer.next(_this.returnData(collection, doc, query));
-                    observer.complete();
-                }).catch(function (error) {
-                    return rxjs.Observable.throw(error);
+                    resolve(_this.returnData(collection, doc, query));
                 });
             });
         };
@@ -574,7 +578,7 @@
                 }).catch(reject);
             });
         };
-        UserService.prototype.signOut = function () {
+        UserService.prototype.logout = function () {
             var _this = this;
             return new Promise(function (resolve, reject) {
                 _this.userDataService.user = null;
@@ -634,7 +638,7 @@
                 if (!oobCode || !password)
                     return reject('Missing oobCode or password!');
                 _this.apiService.POST('/auth/set-password', {}, {
-                    oobCode: oobCode,
+                    code: oobCode,
                     password: password
                 }).then(function (response) {
                     if (response.error)
@@ -649,7 +653,7 @@
                 if (!oobCode)
                     return reject('Missing oobCode!');
                 _this.apiService.POST('/auth/verify-code', {}, {
-                    oobCode: oobCode
+                    code: oobCode
                 }).then(function (response) {
                     if (response.error)
                         return reject(response);
@@ -683,10 +687,13 @@
         // TODO: https://xkeshi.github.io/image-compressor/
         FileService.prototype.upload = 
         // TODO: https://xkeshi.github.io/image-compressor/
-        function (appFile, customFolder) {
+        function (appFile, customFolder, customName) {
             var _this = this;
             if (customFolder === void 0) { customFolder = null; }
-            return new rxjs.Observable(function (observer) {
+            if (customName === void 0) { customName = null; }
+            return new Promise(function (resolve, reject) {
+                if (!appFile)
+                    return reject('No local file!');
                 var body = {
                     file: Object.assign(_this.base64Breakdown(appFile.base64), {
                         name: appFile.name
@@ -694,15 +701,17 @@
                 };
                 if (customFolder)
                     body.folder = customFolder;
+                if (customName)
+                    body.name = customName;
                 _this.apiService.POST('/file', {}, body)
-                    .then(function (response) {
-                    observer.next(response);
-                    observer.complete();
-                });
+                    .then(resolve)
+                    .catch(reject);
             });
         };
         FileService.prototype.load = function (file) {
             return new Promise(function (resolve, reject) {
+                if (!file)
+                    resolve(null);
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     resolve({

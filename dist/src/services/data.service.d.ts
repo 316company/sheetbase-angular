@@ -1,5 +1,4 @@
 import { NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { IDataQuery } from '../misc/interfaces';
 export declare class DataService {
@@ -14,7 +13,7 @@ export declare class DataService {
      * @param doc
      * @param query
      */
-    get(collection: string, doc?: string, query?: IDataQuery): Observable<any>;
+    get(collection: string, doc?: string, query?: IDataQuery): Promise<any>;
     /**
      *
      * @param collection

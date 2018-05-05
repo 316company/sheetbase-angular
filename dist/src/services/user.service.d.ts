@@ -12,7 +12,7 @@ export declare class UserService {
     onAuthStateChanged(): Observable<any>;
     createUserWithEmailAndPassword(email: string, password: string): Promise<any>;
     loginWithEmailAndPassword(email: string, password: string): Promise<{}>;
-    signOut(): Promise<any>;
+    logout(): Promise<any>;
     updateProfile(profile: any): Promise<any>;
     resetPasswordEmail(email: string): Promise<any>;
     setPassword(oobCode: string, password: string): Promise<any>;

@@ -174,7 +174,7 @@ export class UserService {
 
       this.apiService.POST('/auth/set-password', {},
         {
-          oobCode,
+          code: oobCode,
           password
         }
       ).then(response => {
@@ -191,7 +191,7 @@ export class UserService {
 
       this.apiService.POST('/auth/verify-code', {},
         {
-          oobCode
+          code: oobCode
         }
       ).then(response => {
         if(response.error) return reject(response);

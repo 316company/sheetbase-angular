@@ -1,5 +1,4 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 var FileService = /** @class */ (function () {
     function FileService(ngZone, apiService) {
@@ -15,10 +14,13 @@ var FileService = /** @class */ (function () {
     // TODO: https://xkeshi.github.io/image-compressor/
     FileService.prototype.upload = 
     // TODO: https://xkeshi.github.io/image-compressor/
-    function (appFile, customFolder) {
+    function (appFile, customFolder, customName) {
         var _this = this;
         if (customFolder === void 0) { customFolder = null; }
-        return new Observable(function (observer) {
+        if (customName === void 0) { customName = null; }
+        return new Promise(function (resolve, reject) {
+            if (!appFile)
+                return reject('No local file!');
             var body = {
                 file: Object.assign(_this.base64Breakdown(appFile.base64), {
                     name: appFile.name
@@ -26,15 +28,17 @@ var FileService = /** @class */ (function () {
             };
             if (customFolder)
                 body.folder = customFolder;
+            if (customName)
+                body.name = customName;
             _this.apiService.POST('/file', {}, body)
-                .then(function (response) {
-                observer.next(response);
-                observer.complete();
-            });
+                .then(resolve)
+                .catch(reject);
         });
     };
     FileService.prototype.load = function (file) {
         return new Promise(function (resolve, reject) {
+            if (!file)
+                resolve(null);
             var reader = new FileReader();
             reader.onload = function (e) {
                 resolve({

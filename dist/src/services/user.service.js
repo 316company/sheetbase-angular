@@ -91,7 +91,7 @@ var UserService = /** @class */ (function () {
             }).catch(reject);
         });
     };
-    UserService.prototype.signOut = function () {
+    UserService.prototype.logout = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             _this.userDataService.user = null;
@@ -151,7 +151,7 @@ var UserService = /** @class */ (function () {
             if (!oobCode || !password)
                 return reject('Missing oobCode or password!');
             _this.apiService.POST('/auth/set-password', {}, {
-                oobCode: oobCode,
+                code: oobCode,
                 password: password
             }).then(function (response) {
                 if (response.error)
@@ -166,7 +166,7 @@ var UserService = /** @class */ (function () {
             if (!oobCode)
                 return reject('Missing oobCode!');
             _this.apiService.POST('/auth/verify-code', {}, {
-                oobCode: oobCode
+                code: oobCode
             }).then(function (response) {
                 if (response.error)
                     return reject(response);

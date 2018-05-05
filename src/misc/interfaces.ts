@@ -1,6 +1,6 @@
 export interface ISheetbaseConfig {
     apiKey: string,
-    backend: string,
+    backendUrl: string,
     cache?: number
 }
 export interface ISheetbaseConfigLite {
@@ -27,8 +27,8 @@ export interface IAppHTTPResponse {
 }
 
 export interface IAppFile {
-    name: string,
-    size: number,
-    mimeType: string,
-    base64: string
+    name?: string,
+    size?: number,
+    mimeType?: string,
+    base64?: string
   }

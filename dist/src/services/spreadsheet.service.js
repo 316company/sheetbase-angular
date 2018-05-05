@@ -7,9 +7,17 @@ var SpreadsheetService = /** @class */ (function () {
         this.http = http;
         this.CONFIG = CONFIG;
     }
-    SpreadsheetService.prototype.get = function (spreadsheetId, rangeA1, dataType, keyField, returnObject) {
+    SpreadsheetService.prototype.get = function (rangeA1, tableName, keyField, returnObject) {
+        if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
+        if (tableName === void 0) { tableName = null; }
+        if (keyField === void 0) { keyField = null; }
+        if (returnObject === void 0) { returnObject = true; }
+        return this.getData(this.CONFIG.databaseId, rangeA1, tableName, keyField, returnObject);
+    };
+    SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, tableName, keyField, returnObject) {
         var _this = this;
-        if (dataType === void 0) { dataType = null; }
+        if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
+        if (tableName === void 0) { tableName = null; }
         if (keyField === void 0) { keyField = null; }
         if (returnObject === void 0) { returnObject = true; }
         return new Promise(function (resolve, reject) {
@@ -17,7 +25,7 @@ var SpreadsheetService = /** @class */ (function () {
                 _this.load(spreadsheetId, rangeA1)
                     .then(function (value) {
                     return _this.ngZone.run(function () {
-                        resolve(_this.modifyValue(value, dataType, keyField, returnObject));
+                        resolve(_this.modifyValue(value, tableName, keyField, returnObject));
                     });
                 })
                     .catch(reject);
@@ -30,7 +38,7 @@ var SpreadsheetService = /** @class */ (function () {
                 _this.loadBatch(spreadsheetId, rangeStr_1)
                     .then(function (value) {
                     return _this.ngZone.run(function () {
-                        resolve(_this.modifyValue(value, dataType, keyField, returnObject));
+                        resolve(_this.modifyValue(value, tableName, keyField, returnObject));
                     });
                 })
                     .catch(reject);
@@ -91,13 +99,13 @@ var SpreadsheetService = /** @class */ (function () {
         });
         return final;
     };
-    SpreadsheetService.prototype.modifyValue = function (value, dataType, keyField, returnObject) {
+    SpreadsheetService.prototype.modifyValue = function (value, tableName, keyField, returnObject) {
         var customModifier = function (item, tools) {
             if (tools === void 0) { tools = {}; }
             return item;
         };
-        if (dataType && this.CONFIG.modifiers && this.CONFIG.modifiers[dataType])
-            customModifier = this.CONFIG.modifiers[dataType];
+        if (tableName && this.CONFIG.modifiers && this.CONFIG.modifiers[tableName])
+            customModifier = this.CONFIG.modifiers[tableName];
         var itemsObject = null;
         var itemsArray = null;
         (value || []).forEach(function (item) {

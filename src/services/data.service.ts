@@ -1,5 +1,4 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
@@ -34,15 +33,15 @@ export class DataService {
     collection: string,
     doc: string = null,
     query: IDataQuery = null
-  ): Observable<any> {
-    return new Observable(observer => {
+  ): Promise<any> {
+    return new Promise((resolve, reject) => {
       let itemsObject = (this.database||{})[collection];
       
       // return data
       if(itemsObject && Object.keys(itemsObject).length > 0) {
-        observer.next(this.returnData(collection, doc, query));
-        observer.complete();
+        resolve(this.returnData(collection, doc, query));
       }
+      
       this.apiService.GET('/data', {
         table: collection
       }).then(response => {
@@ -50,10 +49,7 @@ export class DataService {
           if(!this.database) this.database = {};
           this.database[collection] = this.modifyValue(response.data, collection);
         });
-        observer.next(this.returnData(collection, doc, query));
-        observer.complete();
-      }).catch(error => {
-        return Observable.throw(error);
+        resolve(this.returnData(collection, doc, query));
       });
     });
   }

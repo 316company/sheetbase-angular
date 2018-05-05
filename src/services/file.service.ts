@@ -1,5 +1,4 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 
@@ -21,26 +20,26 @@ export class FileService {
     });
   }
 
-
   // TODO: https://xkeshi.github.io/image-compressor/
-  upload(appFile: IAppFile, customFolder: string = null): Observable<any> {
-    return new Observable(observer => {
+  upload(appFile: IAppFile, customFolder: string = null, customName: string = null): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if(!appFile) return reject('No local file!');
       let body: any = {
         file: Object.assign(this.base64Breakdown(appFile.base64), {
           name: appFile.name
         })
       }
       if(customFolder) body.folder = customFolder;
+      if(customName) body.name = customName;
       this.apiService.POST('/file', {}, body)
-      .then(response => {
-        observer.next(response);
-        observer.complete();
-      });
+      .then(resolve)
+      .catch(reject);
     });
   }
 
   load(file: File): Promise<IAppFile> {
     return new Promise((resolve, reject) => {
+      if(!file) resolve(null);
       let reader = new FileReader();
       reader.onload = (e: any) => {
         resolve({
