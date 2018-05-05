@@ -50,7 +50,7 @@ export class DataService {
           this.database[collection] = this.modifyValue(response.data, collection);
         });
         resolve(this.returnData(collection, doc, query));
-      });
+      }).catch(reject);
     });
   }
 

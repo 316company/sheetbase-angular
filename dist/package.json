@@ -1,6 +1,6 @@
 {
     "name": "sheetbase-angular",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Sheetbase core for Angular apps.",
     "main": "./bundles/sheetbase.umd.js",
     "module": "./src/index.js",

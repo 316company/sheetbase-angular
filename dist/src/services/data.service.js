@@ -46,7 +46,7 @@ var DataService = /** @class */ (function () {
                     _this.database[collection] = _this.modifyValue(response.data, collection);
                 });
                 resolve(_this.returnData(collection, doc, query));
-            });
+            }).catch(reject);
         });
     };
     /**
