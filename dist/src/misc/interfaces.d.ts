@@ -1,11 +1,10 @@
 export interface ISheetbaseConfig {
-    apiKey: string;
-    backendUrl: string;
+    apiKey?: string;
+    backendUrl?: string;
     cache?: number;
-}
-export interface ISheetbaseConfigLite {
-    googleApiKey: string;
-    databaseId: string;
+    googleApiKey?: string;
+    databaseId?: string;
+    modifiers?: any;
 }
 export interface IDataQuery {
     limitToFirst?: number;

@@ -1,4 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 import { ApiService } from './api.service';
 var FileService = /** @class */ (function () {
     function FileService(ngZone, apiService) {
@@ -18,9 +19,9 @@ var FileService = /** @class */ (function () {
         var _this = this;
         if (customFolder === void 0) { customFolder = null; }
         if (customName === void 0) { customName = null; }
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!appFile)
-                return reject('No local file!');
+                return observer.error('No local file!');
             var body = {
                 file: Object.assign(_this.base64Breakdown(appFile.base64), {
                     name: appFile.name
@@ -31,17 +32,18 @@ var FileService = /** @class */ (function () {
             if (customName)
                 body.name = customName;
             _this.apiService.POST('/file', {}, body)
-                .then(resolve)
-                .catch(reject);
+                .subscribe(function (response) {
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
     FileService.prototype.load = function (file) {
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!file)
-                resolve(null);
+                return observer.error(null);
             var reader = new FileReader();
             reader.onload = function (e) {
-                resolve({
+                observer.next({
                     name: file.name,
                     size: file.size,
                     mimeType: file.type,

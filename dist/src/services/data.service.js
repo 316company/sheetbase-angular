@@ -1,12 +1,15 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
+import { SpreadsheetService } from './spreadsheet.service';
 import { HELPER } from '../misc/helper';
 var DataService = /** @class */ (function () {
-    function DataService(ngZone, CONFIG, apiService) {
+    function DataService(ngZone, CONFIG, apiService, spreadsheetService) {
         this.ngZone = ngZone;
         this.CONFIG = CONFIG;
         this.apiService = apiService;
+        this.spreadsheetService = spreadsheetService;
     }
     /**
      * Get data
@@ -30,23 +33,43 @@ var DataService = /** @class */ (function () {
         var _this = this;
         if (doc === void 0) { doc = null; }
         if (query === void 0) { query = null; }
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             var itemsObject = (_this.database || {})[collection];
             // return data
-            // return data
             if (itemsObject && Object.keys(itemsObject).length > 0) {
-                resolve(_this.returnData(collection, doc, query));
+                observer.next(_this.returnData(collection, doc, query));
             }
-            _this.apiService.GET('/data', {
-                table: collection
-            }).then(function (response) {
+            var dataGetter = _this.getData(collection, doc, query);
+            if (_this.CONFIG.googleApiKey && _this.CONFIG.databaseId) {
+                dataGetter = _this.getDataSolutionLite(collection, doc, query);
+            }
+            dataGetter.subscribe(function (result) {
                 _this.ngZone.run(function () {
                     if (!_this.database)
                         _this.database = {};
-                    _this.database[collection] = _this.modifyValue(response.data, collection);
+                    _this.database[collection] = result;
                 });
-                resolve(_this.returnData(collection, doc, query));
-            }).catch(reject);
+                observer.next(_this.returnData(collection, doc, query));
+            }, function (error) { return observer.error(error); });
+        });
+    };
+    DataService.prototype.getData = function (collection, doc, query) {
+        var _this = this;
+        return new Observable(function (observer) {
+            _this.apiService.GET('/data', {
+                table: collection
+            }).subscribe(function (response) {
+                observer.next(_this.modifyValue(response.data, collection));
+            }, function (error) { return observer.error(error); });
+        });
+    };
+    DataService.prototype.getDataSolutionLite = function (collection, doc, query) {
+        var _this = this;
+        return new Observable(function (observer) {
+            _this.spreadsheetService.get(collection)
+                .subscribe(function (result) {
+                observer.next(result);
+            }, function (error) { return observer.error(error); });
         });
     };
     /**
@@ -70,7 +93,6 @@ var DataService = /** @class */ (function () {
     function (collection, doc, query) {
         var itemsObject = (this.database || {})[collection] || {};
         // item
-        // item
         if (doc) {
             return Object.assign({
                 $key: doc
@@ -89,7 +111,6 @@ var DataService = /** @class */ (function () {
         query = query || {};
         var resultItems = [];
         // filter
-        // filter
         if (query.orderByKey &&
             (query.equalTo || (!query.equalTo && typeof query.equalTo === 'boolean'))) {
             var keys_1 = (query.orderByKey).split('/');
@@ -97,7 +118,6 @@ var DataService = /** @class */ (function () {
             keys_1 = keys_1.slice(1, keys_1.length);
             (items || []).forEach(function (item) {
                 var value = item[keyFirst_1] || {};
-                // console.log(''+ item.title +' ', value, keys);
                 // console.log(''+ item.title +' ', value, keys);
                 (keys_1 || []).forEach(function (key) {
                     if (value[key]) {
@@ -108,13 +128,11 @@ var DataService = /** @class */ (function () {
                     }
                 });
                 // console.log('final value ', value);
-                // console.log('final value ', value);
                 if ((typeof query.equalTo === 'boolean' && typeof value === 'boolean' && value === query.equalTo) || // true === true
                     // true === true
                     (query.equalTo === '!null' && !!value) || // any (#false) === '!null'
                     // any (#false) === '!null'
                     (typeof query.equalTo !== 'boolean' && typeof value !== 'boolean' && value === query.equalTo) // string, number === string, number
-                // string, number === string, number
                 )
                     resultItems.push(item);
             });
@@ -124,7 +142,6 @@ var DataService = /** @class */ (function () {
         }
         // sort result
         resultItems = HELPER.sort(resultItems, (query.orderByKey || 'id'), (query.order || 'asc'));
-        // limit
         // limit
         if (query.limitToFirst)
             resultItems = resultItems.slice(query.offset || 0, query.limitToFirst + (query.offset || 0));
@@ -155,6 +172,7 @@ var DataService = /** @class */ (function () {
         { type: NgZone, },
         { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] },] },
         { type: ApiService, },
+        { type: SpreadsheetService, },
     ]; };
     return DataService;
 }());

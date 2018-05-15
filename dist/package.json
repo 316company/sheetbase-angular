@@ -1,14 +1,15 @@
 {
     "name": "sheetbase-angular",
-    "version": "0.0.6",
-    "description": "Sheetbase core for Angular apps.",
+    "version": "0.0.8",
+    "description": "Sheetbase module for Angular/Ionic apps.",
     "main": "./bundles/sheetbase.umd.js",
     "module": "./src/index.js",
     "typings": "./src/index.d.ts",
     "keywords": [
         "angular",
 		"ionic",
-		"spreadsheet"
+		"spreadsheet",
+		"google-apps-script"
     ],
     "author": "316 Company",
     "license": "MIT",

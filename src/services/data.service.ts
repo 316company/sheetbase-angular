@@ -1,9 +1,11 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
+import { SpreadsheetService } from './spreadsheet.service';
 
-import { IDataQuery } from '../misc/interfaces';
+import { IDataQuery, ISheetbaseConfig } from '../misc/interfaces';
 import { HELPER } from '../misc/helper';
 
 
@@ -17,8 +19,9 @@ export class DataService {
   constructor(
     private ngZone: NgZone,
 
-    @Inject(SheetbaseConfigService) private CONFIG,
-    private apiService: ApiService
+    @Inject(SheetbaseConfigService) private CONFIG: ISheetbaseConfig,
+    private apiService: ApiService,
+    private spreadsheetService: SpreadsheetService,
   ) {
   }
 
@@ -33,24 +36,60 @@ export class DataService {
     collection: string,
     doc: string = null,
     query: IDataQuery = null
-  ): Promise<any> {
-    return new Promise((resolve, reject) => {
+  ): Observable<any> {
+    return new Observable(observer => {
+
       let itemsObject = (this.database||{})[collection];
       
       // return data
       if(itemsObject && Object.keys(itemsObject).length > 0) {
-        resolve(this.returnData(collection, doc, query));
+        observer.next(this.returnData(collection, doc, query));
+      }
+
+      let dataGetter: Observable<any> = this.getData(collection, doc, query);
+      if(this.CONFIG.googleApiKey && this.CONFIG.databaseId) {
+        dataGetter = this.getDataSolutionLite(collection, doc, query);
       }
       
-      this.apiService.GET('/data', {
-        table: collection
-      }).then(response => {
+      dataGetter.subscribe(result => {
         this.ngZone.run(() => {
           if(!this.database) this.database = {};
-          this.database[collection] = this.modifyValue(response.data, collection);
+          this.database[collection] = result;
         });
-        resolve(this.returnData(collection, doc, query));
-      }).catch(reject);
+        observer.next(this.returnData(collection, doc, query));
+      }, error => observer.error(error));
+
+    });
+  }
+
+  private getData(
+    collection: string,
+    doc: string,
+    query: IDataQuery
+  ): Observable<any> {
+    return new Observable(observer => {
+      this.apiService.GET('/data', {
+        table: collection
+      }).subscribe(response => {
+        observer.next(
+          this.modifyValue(response.data, collection)
+        );
+      }, error => observer.error(error));
+    });
+  }
+
+  private getDataSolutionLite(
+    collection: string,
+    doc: string,
+    query: IDataQuery
+  ): Observable<any> {
+    return new Observable(observer => {
+      this.spreadsheetService.get(
+        collection
+      )
+      .subscribe(result => {
+        observer.next(result);
+      }, error => observer.error(error));
     });
   }
 

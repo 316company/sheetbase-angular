@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from "rxjs/Observable";
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { UserDataService } from './user-data.service';
 var ApiService = /** @class */ (function () {
@@ -27,10 +28,9 @@ var ApiService = /** @class */ (function () {
         var _this = this;
         if (endpoint === void 0) { endpoint = null; }
         if (params === void 0) { params = {}; }
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!_this.CONFIG.backendUrl) {
-                console.error('[Error][Sheetbase] No backend for this project!');
-                return reject(null);
+                return observer.error('[Error][Sheetbase] No backend for this project!');
             }
             // build uri
             var uri = _this.CONFIG.backendUrl;
@@ -44,7 +44,6 @@ var ApiService = /** @class */ (function () {
             if (!endpoint && Object.keys(params || {}).length > 0)
                 uri = uri.replace('?&', '?');
             // get data
-            // get data
             if (!endpoint && Object.keys(params).length < 1) {
                 uri += '?apiKey=' + _this.CONFIG.apiKey;
             }
@@ -55,9 +54,9 @@ var ApiService = /** @class */ (function () {
                 uri += '&token=' + _this.userDataService.token;
             _this.http.get(uri).subscribe(function (data) {
                 if (data.error)
-                    return reject(data);
-                resolve(data);
-            }, reject);
+                    return observer.error(data);
+                observer.next(data);
+            }, function (error) { return observer.error(error); });
         });
     };
     /**
@@ -83,10 +82,9 @@ var ApiService = /** @class */ (function () {
         if (endpoint === void 0) { endpoint = null; }
         if (params === void 0) { params = {}; }
         if (body === void 0) { body = {}; }
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!_this.CONFIG.backendUrl) {
-                console.error('[Error][Sheetbase] No backend for this project!');
-                return reject(null);
+                return observer.error('[Error][Sheetbase] No backend for this project!');
             }
             // build uri
             var uri = _this.CONFIG.backendUrl;
@@ -111,9 +109,9 @@ var ApiService = /** @class */ (function () {
                 }
             }).subscribe(function (data) {
                 if (data.error)
-                    return reject(data);
-                resolve(data);
-            }, reject);
+                    return observer.error(data);
+                observer.next(data);
+            }, function (error) { return observer.error(error); });
         });
     };
     ApiService.decorators = [

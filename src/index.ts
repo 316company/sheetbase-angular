@@ -6,10 +6,4 @@ export { ApiService } from './services/api.service';
 export { UserService } from './services/user.service';
 export { FileService } from './services/file.service';
 
-export {
-    ISheetbaseConfig,
-    ISheetbaseConfigLite,
-    IDataQuery,
-    IAppHTTPResponse,
-    IAppFile
-} from './misc/interfaces';
+export * from './misc/interfaces';

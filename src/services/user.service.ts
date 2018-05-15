@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 
 import * as PubSub from 'pubsub-js';
 import * as localforage from 'localforage';
@@ -18,9 +18,9 @@ export class UserService {
   ) {
   }
 
-  getToken() { return this.userDataService.token }
+  getToken(): string { return this.userDataService.token }
 
-  getUser() { return this.userDataService.user }
+  getUser(): any { return this.userDataService.user }
 
   onAuthStateChanged(): Observable<any> {
     return new Observable(observer => {
@@ -44,9 +44,9 @@ export class UserService {
     });
   }
 
-  createUserWithEmailAndPassword(email: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if(!email || !password) return reject('Missing email or password!');
+  createUserWithEmailAndPassword(email: string, password: string): Observable<any> {
+    return new Observable(observer => {
+      if(!email || !password) return observer.error('Missing email or password!');
 
       this.apiService.POST('/user/create', {},
         {
@@ -55,8 +55,8 @@ export class UserService {
             password
           }
         }
-      ).then(response => {
-        if(response.error) return reject(response);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
         // save data
         this.ngZone.run(() => {
           this.userDataService.user = response.data.user;
@@ -68,16 +68,16 @@ export class UserService {
         .catch(error => {return});
 
         PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-        resolve(response);
-      }).catch(reject);
+        observer.next(response);
+      }, error => observer.error(error));
     });
   }
 
-  loginWithEmailAndPassword(email: string, password: string) {
-    return new Promise((resolve, reject) => {
-      if(!email || !password) return reject('Missing email or password!');
+  signInWithEmailAndPassword(email: string, password: string) {
+    return new Observable(observer => {
+      if(!email || !password) return observer.error('Missing email or password!');
 
-      if(this.userDataService.user) resolve({
+      if(this.userDataService.user) observer.next({
         token: this.userDataService.token,
         user: this.userDataService.user
       });
@@ -89,8 +89,8 @@ export class UserService {
             password
           }
         }
-      ).then(response => {
-        if(response.error) return reject(response);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
 
         // save data
         this.ngZone.run(() => {
@@ -103,13 +103,13 @@ export class UserService {
         .catch(error => {return});
 
         PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-        resolve(response);
-      }).catch(reject);
+        observer.next(response);
+      }, error => observer.error(error));
     });
   }
 
-  logout(): Promise<any> {
-    return new Promise((resolve, reject) => {
+  signOut(): Observable<any> {
+    return new Observable(observer => {
       this.userDataService.user = null;
       this.userDataService.token = null;
 
@@ -118,22 +118,22 @@ export class UserService {
       .catch(error => {return});
 
       PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', null);
-      resolve(null);
+      observer.next(null);
     });
   }
 
-  updateProfile(profile: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if(!profile || !(profile instanceof Object)) return reject('Invalid profile data.');
+  updateProfile(profile: any): Observable<any> {
+    return new Observable(observer => {
+      if(!profile || !(profile instanceof Object)) return observer.error('Invalid profile data.');
 
-      if(!this.userDataService.user || !this.userDataService.token) return reject('Please login first!');
+      if(!this.userDataService.user || !this.userDataService.token) return observer.error('Please login first!');
 
       this.apiService.POST('/user/profile', {},
         {
           profile
         }
-      ).then(response => {
-        if(response.error) return reject(response);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
 
         // save data
         this.ngZone.run(() => {
@@ -148,55 +148,55 @@ export class UserService {
         .catch(error => {return});
 
         PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-        resolve(response.data.user);
-      }).catch(reject);
+        observer.next(response.data.user);
+      }, error => observer.error(error));
     });
   }
 
-  resetPasswordEmail(email: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if(!email) return reject('Missing email!');
+  sendPasswordResetEmail(email: string): Observable<any> {
+    return new Observable(observer => {
+      if(!email) return observer.error('Missing email!');
 
       this.apiService.POST('/auth/reset-password', {},
         {
           email
         }
-      ).then(response => {
-        if(response.error) return reject(response);
-        resolve(response);
-      }).catch(reject);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
+        observer.next(response);
+      }, error => observer.error(error));
     });
   }
 
-  setPassword(oobCode: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if(!oobCode || !password) return reject('Missing oobCode or password!');
+  confirmPasswordReset(actionCode: string, newPassword: string): Observable<any> {
+    return new Observable(observer => {
+      if(!actionCode || !newPassword) return observer.error('Missing actionCode or password!');
 
       this.apiService.POST('/auth/set-password', {},
         {
-          code: oobCode,
-          password
+          code: actionCode,
+          newPassword
         }
-      ).then(response => {
-        if(response.error) return reject(response);
-        resolve(response);
-      }).catch(reject);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
+        observer.next(response);
+      }, error => observer.error(error));
     });
   }
 
 
-  verifyCode(oobCode: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if(!oobCode) return reject('Missing oobCode!');
+  applyActionCode(actionCode: string): Observable<any> {
+    return new Observable(observer => {
+      if(!actionCode) return observer.error('Missing actionCode!');
 
       this.apiService.POST('/auth/verify-code', {},
         {
-          code: oobCode
+          code: actionCode
         }
-      ).then(response => {
-        if(response.error) return reject(response);
-        resolve(response);
-      }).catch(reject);
+      ).subscribe(response => {
+        if(response.error) return observer.error(response);
+        observer.next(response);
+      }, error => observer.error(error));
     });
   }
 

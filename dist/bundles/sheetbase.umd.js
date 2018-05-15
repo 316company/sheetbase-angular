@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/common/http'), require('lodash'), require('rxjs'), require('pubsub-js'), require('localforage')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/common/http', 'lodash', 'rxjs', 'pubsub-js', 'localforage'], factory) :
-    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global.http,global.lodash,global.rxjs,global.PubSub,global.localforage));
-}(this, (function (exports,core,http,lodash,rxjs,PubSub,localforage) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('rxjs/Observable'), require('@angular/common/http'), require('lodash'), require('pubsub-js'), require('localforage')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'rxjs/Observable', '@angular/common/http', 'lodash', 'pubsub-js', 'localforage'], factory) :
+    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global.Rx,global.http,global.lodash,global.PubSub,global.localforage));
+}(this, (function (exports,core,Observable,http,lodash,PubSub,localforage) { 'use strict';
 
     var SheetbaseConfigService = new core.InjectionToken('SheetbaseConfig');
 
@@ -12,28 +12,22 @@
             this.http = http$$1;
             this.CONFIG = CONFIG;
         }
-        SpreadsheetService.prototype.get = function (rangeA1, tableName, keyField, returnObject) {
-            if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
-            if (tableName === void 0) { tableName = null; }
+        SpreadsheetService.prototype.get = function (tableName, range, keyField, returnObject) {
+            if (range === void 0) { range = 'A1:ZZ'; }
             if (keyField === void 0) { keyField = null; }
             if (returnObject === void 0) { returnObject = true; }
-            return this.getData(this.CONFIG.databaseId, rangeA1, tableName, keyField, returnObject);
+            return this.getData(this.CONFIG.databaseId, tableName + '!' + range, tableName, keyField, returnObject);
         };
-        SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, tableName, keyField, returnObject) {
+        SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, type, keyField, returnObject) {
             var _this = this;
-            if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
-            if (tableName === void 0) { tableName = null; }
-            if (keyField === void 0) { keyField = null; }
-            if (returnObject === void 0) { returnObject = true; }
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (rangeA1.indexOf(',') < 0) {
                     _this.load(spreadsheetId, rangeA1)
-                        .then(function (value) {
+                        .subscribe(function (value) {
                         return _this.ngZone.run(function () {
-                            resolve(_this.modifyValue(value, tableName, keyField, returnObject));
+                            observer.next(_this.modifyValue(value, type, keyField, returnObject));
                         });
-                    })
-                        .catch(reject);
+                    }, function (error) { return observer.error(error); });
                 }
                 else {
                     var rangeStr_1 = '';
@@ -41,22 +35,21 @@
                         rangeStr_1 += '&ranges=' + range;
                     });
                     _this.loadBatch(spreadsheetId, rangeStr_1)
-                        .then(function (value) {
+                        .subscribe(function (value) {
                         return _this.ngZone.run(function () {
-                            resolve(_this.modifyValue(value, tableName, keyField, returnObject));
+                            observer.next(_this.modifyValue(value, type, keyField, returnObject));
                         });
-                    })
-                        .catch(reject);
+                    }, function (error) { return observer.error(error); });
                 }
             });
         };
         SpreadsheetService.prototype.load = function (id, range) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values/" + range + "?key=" + _this.CONFIG.googleApiKey)
                     .subscribe(function (response) {
-                    resolve(_this.transformValue(response.values));
-                }, reject);
+                    observer.next(_this.transformValue(response.values));
+                }, function (error) { return observer.error(error); });
             });
         };
         SpreadsheetService.prototype.transformValue = function (value) {
@@ -75,11 +68,11 @@
         };
         SpreadsheetService.prototype.loadBatch = function (id, ranges) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values:batchGet?" + ranges + "&key=" + _this.CONFIG.googleApiKey)
                     .subscribe(function (response) {
-                    resolve(_this.transformBatchValue(response.valueRanges));
-                }, reject);
+                    observer.next(_this.transformBatchValue(response.valueRanges));
+                }, function (error) { return observer.error(error); });
             });
         };
         SpreadsheetService.prototype.transformBatchValue = function (value) {
@@ -115,25 +108,20 @@
             var itemsArray = null;
             (value || []).forEach(function (item) {
                 // basic modifier
-                // basic modifier
                 for (var key in item) {
-                    //transform JSON where possible
                     //transform JSON where possible
                     try {
                         item[key] = JSON.parse(item[key]);
                     }
                     catch (e) { }
                     // transform number
-                    // transform number
                     if (!isNaN(item[key]) && Number(item[key]) % 1 === 0)
                         item[key] = parseInt(item[key]);
                     if (!isNaN(item[key]) && Number(item[key]) % 1 !== 0)
                         item[key] = parseFloat(item[key]);
                     // transform boolean value
-                    // transform boolean value
                     if (typeof item[key] === 'string' || item[key] instanceof String)
                         item[key] = ((item[key]).toLowerCase() === 'true') || ((item[key]).toLowerCase() === 'false' ? false : item[key]);
-                    // delete null key
                     // delete null key
                     if (item[key] === '' || item[key] === null || item[key] === undefined) {
                         delete item[key];
@@ -197,10 +185,9 @@
             var _this = this;
             if (endpoint === void 0) { endpoint = null; }
             if (params === void 0) { params = {}; }
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!_this.CONFIG.backendUrl) {
-                    console.error('[Error][Sheetbase] No backend for this project!');
-                    return reject(null);
+                    return observer.error('[Error][Sheetbase] No backend for this project!');
                 }
                 // build uri
                 var uri = _this.CONFIG.backendUrl;
@@ -214,7 +201,6 @@
                 if (!endpoint && Object.keys(params || {}).length > 0)
                     uri = uri.replace('?&', '?');
                 // get data
-                // get data
                 if (!endpoint && Object.keys(params).length < 1) {
                     uri += '?apiKey=' + _this.CONFIG.apiKey;
                 }
@@ -225,9 +211,9 @@
                     uri += '&token=' + _this.userDataService.token;
                 _this.http.get(uri).subscribe(function (data) {
                     if (data.error)
-                        return reject(data);
-                    resolve(data);
-                }, reject);
+                        return observer.error(data);
+                    observer.next(data);
+                }, function (error) { return observer.error(error); });
             });
         };
         /**
@@ -253,10 +239,9 @@
             if (endpoint === void 0) { endpoint = null; }
             if (params === void 0) { params = {}; }
             if (body === void 0) { body = {}; }
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!_this.CONFIG.backendUrl) {
-                    console.error('[Error][Sheetbase] No backend for this project!');
-                    return reject(null);
+                    return observer.error('[Error][Sheetbase] No backend for this project!');
                 }
                 // build uri
                 var uri = _this.CONFIG.backendUrl;
@@ -281,9 +266,9 @@
                     }
                 }).subscribe(function (data) {
                     if (data.error)
-                        return reject(data);
-                    resolve(data);
-                }, reject);
+                        return observer.error(data);
+                    observer.next(data);
+                }, function (error) { return observer.error(error); });
             });
         };
         ApiService.decorators = [
@@ -335,10 +320,11 @@
     };
 
     var DataService = /** @class */ (function () {
-        function DataService(ngZone, CONFIG, apiService) {
+        function DataService(ngZone, CONFIG, apiService, spreadsheetService) {
             this.ngZone = ngZone;
             this.CONFIG = CONFIG;
             this.apiService = apiService;
+            this.spreadsheetService = spreadsheetService;
         }
         /**
          * Get data
@@ -362,23 +348,43 @@
             var _this = this;
             if (doc === void 0) { doc = null; }
             if (query === void 0) { query = null; }
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 var itemsObject = (_this.database || {})[collection];
                 // return data
-                // return data
                 if (itemsObject && Object.keys(itemsObject).length > 0) {
-                    resolve(_this.returnData(collection, doc, query));
+                    observer.next(_this.returnData(collection, doc, query));
                 }
-                _this.apiService.GET('/data', {
-                    table: collection
-                }).then(function (response) {
+                var dataGetter = _this.getData(collection, doc, query);
+                if (_this.CONFIG.googleApiKey && _this.CONFIG.databaseId) {
+                    dataGetter = _this.getDataSolutionLite(collection, doc, query);
+                }
+                dataGetter.subscribe(function (result) {
                     _this.ngZone.run(function () {
                         if (!_this.database)
                             _this.database = {};
-                        _this.database[collection] = _this.modifyValue(response.data, collection);
+                        _this.database[collection] = result;
                     });
-                    resolve(_this.returnData(collection, doc, query));
-                }).catch(reject);
+                    observer.next(_this.returnData(collection, doc, query));
+                }, function (error) { return observer.error(error); });
+            });
+        };
+        DataService.prototype.getData = function (collection, doc, query) {
+            var _this = this;
+            return new Observable.Observable(function (observer) {
+                _this.apiService.GET('/data', {
+                    table: collection
+                }).subscribe(function (response) {
+                    observer.next(_this.modifyValue(response.data, collection));
+                }, function (error) { return observer.error(error); });
+            });
+        };
+        DataService.prototype.getDataSolutionLite = function (collection, doc, query) {
+            var _this = this;
+            return new Observable.Observable(function (observer) {
+                _this.spreadsheetService.get(collection)
+                    .subscribe(function (result) {
+                    observer.next(result);
+                }, function (error) { return observer.error(error); });
             });
         };
         /**
@@ -402,7 +408,6 @@
         function (collection, doc, query) {
             var itemsObject = (this.database || {})[collection] || {};
             // item
-            // item
             if (doc) {
                 return Object.assign({
                     $key: doc
@@ -421,7 +426,6 @@
             query = query || {};
             var resultItems = [];
             // filter
-            // filter
             if (query.orderByKey &&
                 (query.equalTo || (!query.equalTo && typeof query.equalTo === 'boolean'))) {
                 var keys_1 = (query.orderByKey).split('/');
@@ -429,7 +433,6 @@
                 keys_1 = keys_1.slice(1, keys_1.length);
                 (items || []).forEach(function (item) {
                     var value = item[keyFirst_1] || {};
-                    // console.log(''+ item.title +' ', value, keys);
                     // console.log(''+ item.title +' ', value, keys);
                     (keys_1 || []).forEach(function (key) {
                         if (value[key]) {
@@ -440,13 +443,11 @@
                         }
                     });
                     // console.log('final value ', value);
-                    // console.log('final value ', value);
                     if ((typeof query.equalTo === 'boolean' && typeof value === 'boolean' && value === query.equalTo) || // true === true
                         // true === true
                         (query.equalTo === '!null' && !!value) || // any (#false) === '!null'
                         // any (#false) === '!null'
                         (typeof query.equalTo !== 'boolean' && typeof value !== 'boolean' && value === query.equalTo) // string, number === string, number
-                    // string, number === string, number
                     )
                         resultItems.push(item);
                 });
@@ -456,7 +457,6 @@
             }
             // sort result
             resultItems = HELPER.sort(resultItems, (query.orderByKey || 'id'), (query.order || 'asc'));
-            // limit
             // limit
             if (query.limitToFirst)
                 resultItems = resultItems.slice(query.offset || 0, query.limitToFirst + (query.offset || 0));
@@ -487,6 +487,7 @@
             { type: core.NgZone, },
             { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
             { type: ApiService, },
+            { type: SpreadsheetService, },
         ]; };
         return DataService;
     }());
@@ -501,7 +502,7 @@
         UserService.prototype.getUser = function () { return this.userDataService.user; };
         UserService.prototype.onAuthStateChanged = function () {
             var _this = this;
-            return new rxjs.Observable(function (observer) {
+            return new Observable.Observable(function (observer) {
                 localforage.getItem('sheetbaseAuthData')
                     .then(function (data) {
                     // save data
@@ -521,17 +522,17 @@
         };
         UserService.prototype.createUserWithEmailAndPassword = function (email, password) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!email || !password)
-                    return reject('Missing email or password!');
+                    return observer.error('Missing email or password!');
                 _this.apiService.POST('/user/create', {}, {
                     credential: {
                         email: email,
                         password: password
                     }
-                }).then(function (response) {
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
+                        return observer.error(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
@@ -542,17 +543,17 @@
                         .then(function () { return; })
                         .catch(function (error) { return; });
                     PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                    resolve(response);
-                }).catch(reject);
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
-        UserService.prototype.loginWithEmailAndPassword = function (email, password) {
+        UserService.prototype.signInWithEmailAndPassword = function (email, password) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!email || !password)
-                    return reject('Missing email or password!');
+                    return observer.error('Missing email or password!');
                 if (_this.userDataService.user)
-                    resolve({
+                    observer.next({
                         token: _this.userDataService.token,
                         user: _this.userDataService.user
                     });
@@ -561,9 +562,9 @@
                         email: email,
                         password: password
                     }
-                }).then(function (response) {
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
+                        return observer.error(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
@@ -574,34 +575,34 @@
                         .then(function () { return; })
                         .catch(function (error) { return; });
                     PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                    resolve(response);
-                }).catch(reject);
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
-        UserService.prototype.logout = function () {
+        UserService.prototype.signOut = function () {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 _this.userDataService.user = null;
                 _this.userDataService.token = null;
                 localforage.removeItem('sheetbaseAuthData')
                     .then(function () { return; })
                     .catch(function (error) { return; });
                 PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', null);
-                resolve(null);
+                observer.next(null);
             });
         };
         UserService.prototype.updateProfile = function (profile) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!profile || !(profile instanceof Object))
-                    return reject('Invalid profile data.');
+                    return observer.error('Invalid profile data.');
                 if (!_this.userDataService.user || !_this.userDataService.token)
-                    return reject('Please login first!');
+                    return observer.error('Please login first!');
                 _this.apiService.POST('/user/profile', {}, {
                     profile: profile
-                }).then(function (response) {
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
+                        return observer.error(response);
                     // save data
                     // save data
                     _this.ngZone.run(function () {
@@ -614,51 +615,51 @@
                         .then(function () { return; })
                         .catch(function (error) { return; });
                     PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                    resolve(response.data.user);
-                }).catch(reject);
+                    observer.next(response.data.user);
+                }, function (error) { return observer.error(error); });
             });
         };
-        UserService.prototype.resetPasswordEmail = function (email) {
+        UserService.prototype.sendPasswordResetEmail = function (email) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!email)
-                    return reject('Missing email!');
+                    return observer.error('Missing email!');
                 _this.apiService.POST('/auth/reset-password', {}, {
                     email: email
-                }).then(function (response) {
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
-                    resolve(response);
-                }).catch(reject);
+                        return observer.error(response);
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
-        UserService.prototype.setPassword = function (oobCode, password) {
+        UserService.prototype.confirmPasswordReset = function (actionCode, newPassword) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
-                if (!oobCode || !password)
-                    return reject('Missing oobCode or password!');
+            return new Observable.Observable(function (observer) {
+                if (!actionCode || !newPassword)
+                    return observer.error('Missing actionCode or password!');
                 _this.apiService.POST('/auth/set-password', {}, {
-                    code: oobCode,
-                    password: password
-                }).then(function (response) {
+                    code: actionCode,
+                    newPassword: newPassword
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
-                    resolve(response);
-                }).catch(reject);
+                        return observer.error(response);
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
-        UserService.prototype.verifyCode = function (oobCode) {
+        UserService.prototype.applyActionCode = function (actionCode) {
             var _this = this;
-            return new Promise(function (resolve, reject) {
-                if (!oobCode)
-                    return reject('Missing oobCode!');
+            return new Observable.Observable(function (observer) {
+                if (!actionCode)
+                    return observer.error('Missing actionCode!');
                 _this.apiService.POST('/auth/verify-code', {}, {
-                    code: oobCode
-                }).then(function (response) {
+                    code: actionCode
+                }).subscribe(function (response) {
                     if (response.error)
-                        return reject(response);
-                    resolve(response);
-                }).catch(reject);
+                        return observer.error(response);
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
         UserService.decorators = [
@@ -691,9 +692,9 @@
             var _this = this;
             if (customFolder === void 0) { customFolder = null; }
             if (customName === void 0) { customName = null; }
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!appFile)
-                    return reject('No local file!');
+                    return observer.error('No local file!');
                 var body = {
                     file: Object.assign(_this.base64Breakdown(appFile.base64), {
                         name: appFile.name
@@ -704,17 +705,18 @@
                 if (customName)
                     body.name = customName;
                 _this.apiService.POST('/file', {}, body)
-                    .then(resolve)
-                    .catch(reject);
+                    .subscribe(function (response) {
+                    observer.next(response);
+                }, function (error) { return observer.error(error); });
             });
         };
         FileService.prototype.load = function (file) {
-            return new Promise(function (resolve, reject) {
+            return new Observable.Observable(function (observer) {
                 if (!file)
-                    resolve(null);
+                    return observer.error(null);
                 var reader = new FileReader();
                 reader.onload = function (e) {
-                    resolve({
+                    observer.next({
                         name: file.name,
                         size: file.size,
                         mimeType: file.type,

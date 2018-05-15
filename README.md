@@ -10,7 +10,7 @@ Angular module for using Sheetbase in Angular/Ionic projects.
 
 Import __SheetbaseModule__ to your _app.module.ts_.
 
-```js	
+```typescript	
 import { SheetbaseModule } from 'sheetbase-angular';
 import { SHEETBASE_CONFIG } from '../configs/sheetbase.config';
 
@@ -19,9 +19,9 @@ imports: [
 ]
 ```
 
-Inject DataService into your page.
+Inject services into your page.
 
-```js
+```typescript
 import { DataService as DataProvider } from 'sheetbase-angular';
 
 constructor(
@@ -36,17 +36,43 @@ ngOnInit() {
 }
 ```
 
-## Docs
+## Config
 
-See [Documentation](https://sheetbase.net/docs) for more.
+There are 2 ways to config the module.
+
+### Option 1: Data only
+
+Get data directly from Google API.
+
+| Key          | Type   | Description                |
+|--------------|--------|----------------------------|
+| googleApiKey | string | Google API Key             |
+| databaseId   | string | ID of database spreadsheet |
+
+### Option 2: Full options
+
+Using backend to get data and other functions.
+
+| Key        | Type   | Description     |
+|------------|--------|-----------------|
+| apiKey     | string | Backend API Key |
+| backendUrl | string | Backend URL     |
+
+### Other configs
+
+| Key       | Type   | Description           |
+|-----------|--------|-----------------------|
+| modifiers | object | Custom modifying data |
 
 ## API
 
 ### DataService
 
-#### get(collection: string, doc: string = null, query: IDataQuery = null)
++ ``get(collection: string, doc: string = null, query: IDataQuery = null)``
 
-```js
+Get data from database.
+
+```typescript
 this.sheetbaseData.get('posts', 'post-1')
 .subscribe(post1 => {
 	console.log(post1);
@@ -56,9 +82,11 @@ this.sheetbaseData.get('posts', 'post-1')
 
 ### ApiService
 
-#### GET(endpoint: string = null, params: any = {})
++ ``GET(endpoint: string = null, params: any = {})``
 
-```js
+Request GET method.
+
+```typescript
 this.sheetbaseApi.GET('/data', {
 	apiKey: 'my_api_key',
 	table: 'posts'
@@ -69,9 +97,11 @@ this.sheetbaseApi.GET('/data', {
 
 ```
 
-#### POST(endpoint: string = null, params: any = {}, body: any = {})
++ ``POST(endpoint: string = null, params: any = {}, body: any = {})``
 
-```js
+Request POST method.
+
+```typescript
 this.sheetbaseApi.POST('/user/create', {}, {
 	apiKey: 'my_api_key',
 	email: 'email@email.email',
@@ -85,9 +115,11 @@ this.sheetbaseApi.POST('/user/create', {}, {
 
 ### UserService
 
-#### getToken()
++ ``getToken()``
 
-```js
+Get user id token.
+
+```typescript
 this.sheetbaseUser.getToken()
 .subscribe(token => {
 	console.log(token);
@@ -95,9 +127,11 @@ this.sheetbaseUser.getToken()
 
 ```
 
-#### getUser()
++ ``getUser()``
 
-```js
+Get user data.
+
+```typescript
 this.sheetbaseUser.getUser()
 .subscribe(profile => {
 	console.log(profile);
@@ -105,9 +139,11 @@ this.sheetbaseUser.getUser()
 
 ```
 
-#### onAuthStateChanged()
++ ``onAuthStateChanged()``
 
-```js
+Event of user authentication status.
+
+```typescript
 this.sheetbaseUser.onAuthStateChanged()
 .subscribe(profile => {
 	console.log(profile);
@@ -115,9 +151,11 @@ this.sheetbaseUser.onAuthStateChanged()
 
 ```
 
-#### createUserWithEmailAndPassword(email: string, password: string)
++ ``createUserWithEmailAndPassword(email: string, password: string)``
 
-```js
+Register new user by email and password.
+
+```typescript
 this.sheetbaseUser.createUserWithEmailAndPassword(
 	'email@email.email',
 	'password'
@@ -128,10 +166,12 @@ this.sheetbaseUser.createUserWithEmailAndPassword(
 
 ```
 
-#### loginWithEmailAndPassword(email: string, password: string)
++ ``signInWithEmailAndPassword(email: string, password: string)``
 
-```js
-this.sheetbaseUser.loginWithEmailAndPassword(
+Log user in by using email and password.
+
+```typescript
+this.sheetbaseUser.signInWithEmailAndPassword(
 	'email@email.email',
 	'password'
 )
@@ -141,19 +181,23 @@ this.sheetbaseUser.loginWithEmailAndPassword(
 
 ```
 
-#### logout()
++ ``signOut()``
 
-```js
-this.sheetbaseUser.logout()
+Log user out.
+
+```typescript
+this.sheetbaseUser.signOut()
 .subscribe(() => {
 	console.log('You are out!');
 });
 
 ```
 
-#### updateProfile(profile: any)
++ ``updateProfile(profile: any)``
 
-```js
+Update user profile.
+
+```typescript
 this.sheetbaseUser.updateProfile({
 	displayName: 'My Name',
 	tel: '+1 2345 6789'
@@ -164,20 +208,24 @@ this.sheetbaseUser.updateProfile({
 
 ```
 
-#### resetPasswordEmail(email: string)
++ ``sendPasswordResetEmail(email: string)``
 
-```js
-this.sheetbaseUser.resetPasswordEmail('email@email.email')
+Ask for password reset email.
+
+```typescript
+this.sheetbaseUser.sendPasswordResetEmail('email@email.email')
 .subscribe(() => {
 	console.log('Email sent!');
 });
 
 ```
 
-#### setPassword(oobCode: string, password: string)
++ ``confirmPasswordReset(oobCode: string, password: string)``
 
-```js
-this.sheetbaseUser.setPassword(
+Change user password.
+
+```typescript
+this.sheetbaseUser.confirmPasswordReset(
 	'my_oob_code',
 	'new-password'
 )
@@ -187,10 +235,12 @@ this.sheetbaseUser.setPassword(
 
 ```
 
-#### verifyCode(oobCode: string)
++ ``applyActionCode(oobCode: string)``
 
-```js
-this.sheetbaseUser.verifyCode('my_oob_code')
+Verify out-of-band code.
+
+```typescript
+this.sheetbaseUser.applyActionCode('my_oob_code')
 .subscribe(() => {
 	console.log('Valid!');
 });
@@ -199,9 +249,11 @@ this.sheetbaseUser.verifyCode('my_oob_code')
 
 ### FileService
 
-#### get(fileId: string)
++ ``get(fileId: string)``
 
-```js
+Get file information by id.
+
+```typescript
 this.sheetbaseFile.get('file_id')
 .subscribe(fileInfo => {
 	console.log(fileInfo);
@@ -209,9 +261,11 @@ this.sheetbaseFile.get('file_id')
 
 ```
 
-#### upload(appFile: IAppFile, customFolder: string = null)
++ ``upload(appFile: IAppFile, customFolder: string = null)``
 
-```js
+Upload a file.
+
+```typescript
 this.sheetbaseFile.upload({
 	name: 'file.txt',
 	mimeType: 'text/plain',
@@ -223,15 +277,21 @@ this.sheetbaseFile.upload({
 
 ```
 
-#### load(file: File)
++ ``load(file: File)``
 
-```js
+Load local file.
+
+```typescript
 this.sheetbaseFile.load(localFile)
 .subscribe(localFileInfo => {
 	console.log(localFileInfo);
 });
 
 ```
+
+## Homepage
+
+Please visit [https://sheetbase.net/](https://sheetbase.net) for more.
 
 ## Support us
 [<img src="https://cloakandmeeple.files.wordpress.com/2017/06/become_a_patron_button3x.png?w=200">](https://www.patreon.com/lamnhan)

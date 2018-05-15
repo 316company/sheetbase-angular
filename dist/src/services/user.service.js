@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import * as PubSub from 'pubsub-js';
 import * as localforage from 'localforage';
 import { UserDataService } from './user-data.service';
@@ -34,17 +34,17 @@ var UserService = /** @class */ (function () {
     };
     UserService.prototype.createUserWithEmailAndPassword = function (email, password) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!email || !password)
-                return reject('Missing email or password!');
+                return observer.error('Missing email or password!');
             _this.apiService.POST('/user/create', {}, {
                 credential: {
                     email: email,
                     password: password
                 }
-            }).then(function (response) {
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
+                    return observer.error(response);
                 // save data
                 // save data
                 _this.ngZone.run(function () {
@@ -55,17 +55,17 @@ var UserService = /** @class */ (function () {
                     .then(function () { return; })
                     .catch(function (error) { return; });
                 PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                resolve(response);
-            }).catch(reject);
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
-    UserService.prototype.loginWithEmailAndPassword = function (email, password) {
+    UserService.prototype.signInWithEmailAndPassword = function (email, password) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!email || !password)
-                return reject('Missing email or password!');
+                return observer.error('Missing email or password!');
             if (_this.userDataService.user)
-                resolve({
+                observer.next({
                     token: _this.userDataService.token,
                     user: _this.userDataService.user
                 });
@@ -74,9 +74,9 @@ var UserService = /** @class */ (function () {
                     email: email,
                     password: password
                 }
-            }).then(function (response) {
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
+                    return observer.error(response);
                 // save data
                 // save data
                 _this.ngZone.run(function () {
@@ -87,34 +87,34 @@ var UserService = /** @class */ (function () {
                     .then(function () { return; })
                     .catch(function (error) { return; });
                 PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                resolve(response);
-            }).catch(reject);
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
-    UserService.prototype.logout = function () {
+    UserService.prototype.signOut = function () {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             _this.userDataService.user = null;
             _this.userDataService.token = null;
             localforage.removeItem('sheetbaseAuthData')
                 .then(function () { return; })
                 .catch(function (error) { return; });
             PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', null);
-            resolve(null);
+            observer.next(null);
         });
     };
     UserService.prototype.updateProfile = function (profile) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!profile || !(profile instanceof Object))
-                return reject('Invalid profile data.');
+                return observer.error('Invalid profile data.');
             if (!_this.userDataService.user || !_this.userDataService.token)
-                return reject('Please login first!');
+                return observer.error('Please login first!');
             _this.apiService.POST('/user/profile', {}, {
                 profile: profile
-            }).then(function (response) {
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
+                    return observer.error(response);
                 // save data
                 // save data
                 _this.ngZone.run(function () {
@@ -127,51 +127,51 @@ var UserService = /** @class */ (function () {
                     .then(function () { return; })
                     .catch(function (error) { return; });
                 PubSub.publish('SHEETBASE_AUTH_STATE_CHANGED', response.data);
-                resolve(response.data.user);
-            }).catch(reject);
+                observer.next(response.data.user);
+            }, function (error) { return observer.error(error); });
         });
     };
-    UserService.prototype.resetPasswordEmail = function (email) {
+    UserService.prototype.sendPasswordResetEmail = function (email) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (!email)
-                return reject('Missing email!');
+                return observer.error('Missing email!');
             _this.apiService.POST('/auth/reset-password', {}, {
                 email: email
-            }).then(function (response) {
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
-                resolve(response);
-            }).catch(reject);
+                    return observer.error(response);
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
-    UserService.prototype.setPassword = function (oobCode, password) {
+    UserService.prototype.confirmPasswordReset = function (actionCode, newPassword) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
-            if (!oobCode || !password)
-                return reject('Missing oobCode or password!');
+        return new Observable(function (observer) {
+            if (!actionCode || !newPassword)
+                return observer.error('Missing actionCode or password!');
             _this.apiService.POST('/auth/set-password', {}, {
-                code: oobCode,
-                password: password
-            }).then(function (response) {
+                code: actionCode,
+                newPassword: newPassword
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
-                resolve(response);
-            }).catch(reject);
+                    return observer.error(response);
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
-    UserService.prototype.verifyCode = function (oobCode) {
+    UserService.prototype.applyActionCode = function (actionCode) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
-            if (!oobCode)
-                return reject('Missing oobCode!');
+        return new Observable(function (observer) {
+            if (!actionCode)
+                return observer.error('Missing actionCode!');
             _this.apiService.POST('/auth/verify-code', {}, {
-                code: oobCode
-            }).then(function (response) {
+                code: actionCode
+            }).subscribe(function (response) {
                 if (response.error)
-                    return reject(response);
-                resolve(response);
-            }).catch(reject);
+                    return observer.error(response);
+                observer.next(response);
+            }, function (error) { return observer.error(error); });
         });
     };
     UserService.decorators = [

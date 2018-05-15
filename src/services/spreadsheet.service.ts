@@ -1,4 +1,6 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
+
 import { HttpClient } from '@angular/common/http';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
@@ -15,14 +17,14 @@ export class SpreadsheetService {
   }
 
   get(
-    rangeA1: string = 'A1:ZZ',
-    tableName: string = null,
+    tableName: string,
+    range: string = 'A1:ZZ',
     keyField: string = null,
     returnObject: boolean = true
-  ): Promise<any> {
+  ): Observable<any> {
     return this.getData(
       this.CONFIG.databaseId,
-      rangeA1,
+      tableName +'!'+ range,
       tableName,
       keyField,
       returnObject
@@ -31,39 +33,37 @@ export class SpreadsheetService {
 
   getData(
     spreadsheetId: string,
-    rangeA1: string = 'A1:ZZ',
-    tableName: string = null,
-    keyField: string = null,
-    returnObject: boolean = true
-  ): Promise<any> {
-    return new Promise((resolve, reject) => {
+    rangeA1: string,
+    type: string,
+    keyField: string,
+    returnObject: boolean
+  ): Observable<any> {
+    return new Observable(observer => {
       if(rangeA1.indexOf(',') < 0) {
         this.load(spreadsheetId, rangeA1)
-        .then(value => this.ngZone.run(() => {          
-          resolve(this.modifyValue(value, tableName, keyField, returnObject));
-        }))
-        .catch(reject);
+        .subscribe(value => this.ngZone.run(() => {          
+          observer.next(this.modifyValue(value, type, keyField, returnObject));
+        }), error => observer.error(error));
       } else {
         let rangeStr = '';
         ((rangeA1.split(',')).map(x => {return x.trim()})||[]).forEach(range => {
           rangeStr += '&ranges='+ range;
         });
         this.loadBatch(spreadsheetId, rangeStr)
-        .then(value => this.ngZone.run(() => {
-          resolve(this.modifyValue(value, tableName, keyField, returnObject));
-        }))
-        .catch(reject);
+        .subscribe(value => this.ngZone.run(() => {
+          observer.next(this.modifyValue(value, type, keyField, returnObject));
+        }), error => observer.error(error));
       }
     });
   }
 
-  private load(id: string, range: string): Promise<any> {
-    return new Promise((resolve, reject) => {
+  private load(id: string, range: string): Observable<any> {
+    return new Observable(observer => {
       this.http.get<{values: any}>
       (`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}?key=${this.CONFIG.googleApiKey}`)
       .subscribe(response => {
-        resolve(this.transformValue(response.values));        
-      }, reject);
+        observer.next(this.transformValue(response.values));        
+      }, error => observer.error(error));
     });
   }
 
@@ -85,13 +85,13 @@ export class SpreadsheetService {
     return items;
   }
 
-  private loadBatch(id: string, ranges: string): Promise<any> {
-    return new Promise((resolve, reject) => {
+  private loadBatch(id: string, ranges: string): Observable<any> {
+    return new Observable(observer => {
       this.http.get<{valueRanges: any}>
       (`https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchGet?${ranges}&key=${this.CONFIG.googleApiKey}`)
       .subscribe(response => {
-        resolve(this.transformBatchValue(response.valueRanges));        
-      }, reject);
+        observer.next(this.transformBatchValue(response.valueRanges));        
+      }, error => observer.error(error));
     });
   }
 

@@ -1,4 +1,5 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 import { HttpClient } from '@angular/common/http';
 import { SheetbaseConfigService } from './sheetbase-config.service';
 var SpreadsheetService = /** @class */ (function () {
@@ -7,28 +8,22 @@ var SpreadsheetService = /** @class */ (function () {
         this.http = http;
         this.CONFIG = CONFIG;
     }
-    SpreadsheetService.prototype.get = function (rangeA1, tableName, keyField, returnObject) {
-        if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
-        if (tableName === void 0) { tableName = null; }
+    SpreadsheetService.prototype.get = function (tableName, range, keyField, returnObject) {
+        if (range === void 0) { range = 'A1:ZZ'; }
         if (keyField === void 0) { keyField = null; }
         if (returnObject === void 0) { returnObject = true; }
-        return this.getData(this.CONFIG.databaseId, rangeA1, tableName, keyField, returnObject);
+        return this.getData(this.CONFIG.databaseId, tableName + '!' + range, tableName, keyField, returnObject);
     };
-    SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, tableName, keyField, returnObject) {
+    SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, type, keyField, returnObject) {
         var _this = this;
-        if (rangeA1 === void 0) { rangeA1 = 'A1:ZZ'; }
-        if (tableName === void 0) { tableName = null; }
-        if (keyField === void 0) { keyField = null; }
-        if (returnObject === void 0) { returnObject = true; }
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             if (rangeA1.indexOf(',') < 0) {
                 _this.load(spreadsheetId, rangeA1)
-                    .then(function (value) {
+                    .subscribe(function (value) {
                     return _this.ngZone.run(function () {
-                        resolve(_this.modifyValue(value, tableName, keyField, returnObject));
+                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
                     });
-                })
-                    .catch(reject);
+                }, function (error) { return observer.error(error); });
             }
             else {
                 var rangeStr_1 = '';
@@ -36,22 +31,21 @@ var SpreadsheetService = /** @class */ (function () {
                     rangeStr_1 += '&ranges=' + range;
                 });
                 _this.loadBatch(spreadsheetId, rangeStr_1)
-                    .then(function (value) {
+                    .subscribe(function (value) {
                     return _this.ngZone.run(function () {
-                        resolve(_this.modifyValue(value, tableName, keyField, returnObject));
+                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
                     });
-                })
-                    .catch(reject);
+                }, function (error) { return observer.error(error); });
             }
         });
     };
     SpreadsheetService.prototype.load = function (id, range) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values/" + range + "?key=" + _this.CONFIG.googleApiKey)
                 .subscribe(function (response) {
-                resolve(_this.transformValue(response.values));
-            }, reject);
+                observer.next(_this.transformValue(response.values));
+            }, function (error) { return observer.error(error); });
         });
     };
     SpreadsheetService.prototype.transformValue = function (value) {
@@ -70,11 +64,11 @@ var SpreadsheetService = /** @class */ (function () {
     };
     SpreadsheetService.prototype.loadBatch = function (id, ranges) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Observable(function (observer) {
             _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values:batchGet?" + ranges + "&key=" + _this.CONFIG.googleApiKey)
                 .subscribe(function (response) {
-                resolve(_this.transformBatchValue(response.valueRanges));
-            }, reject);
+                observer.next(_this.transformBatchValue(response.valueRanges));
+            }, function (error) { return observer.error(error); });
         });
     };
     SpreadsheetService.prototype.transformBatchValue = function (value) {
@@ -110,25 +104,20 @@ var SpreadsheetService = /** @class */ (function () {
         var itemsArray = null;
         (value || []).forEach(function (item) {
             // basic modifier
-            // basic modifier
             for (var key in item) {
-                //transform JSON where possible
                 //transform JSON where possible
                 try {
                     item[key] = JSON.parse(item[key]);
                 }
                 catch (e) { }
                 // transform number
-                // transform number
                 if (!isNaN(item[key]) && Number(item[key]) % 1 === 0)
                     item[key] = parseInt(item[key]);
                 if (!isNaN(item[key]) && Number(item[key]) % 1 !== 0)
                     item[key] = parseFloat(item[key]);
                 // transform boolean value
-                // transform boolean value
                 if (typeof item[key] === 'string' || item[key] instanceof String)
                     item[key] = ((item[key]).toLowerCase() === 'true') || ((item[key]).toLowerCase() === 'false' ? false : item[key]);
-                // delete null key
                 // delete null key
                 if (item[key] === '' || item[key] === null || item[key] === undefined) {
                     delete item[key];

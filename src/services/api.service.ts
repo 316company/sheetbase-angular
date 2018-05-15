@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from "rxjs/Observable";
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 
@@ -26,12 +27,10 @@ export class ApiService {
   GET(
     endpoint: string = null,
     params: any = {}
-  ): Promise<IAppHTTPResponse> {
-    return new Promise((resolve, reject) => {
-
+  ): Observable<IAppHTTPResponse> {
+    return new Observable(observer => {
       if(!this.CONFIG.backendUrl) {
-        console.error('[Error][Sheetbase] No backend for this project!');
-        return reject(null);
+        return observer.error('[Error][Sheetbase] No backend for this project!');
       }
 
       // build uri
@@ -51,9 +50,9 @@ export class ApiService {
       }
       if(this.userDataService.token) uri += '&token='+ this.userDataService.token;
       this.http.get<IAppHTTPResponse>(uri).subscribe(data => {
-        if(data.error) return reject(data);
-        resolve(data);        
-      }, reject);
+        if(data.error) return observer.error(data);
+        observer.next(data);
+      }, error => observer.error(error));
     });
   }
 
@@ -67,11 +66,10 @@ export class ApiService {
     endpoint: string = null,
     params: any = {},
     body: any = {}
-  ): Promise<IAppHTTPResponse> {
-    return new Promise((resolve, reject) => {
+  ): Observable<IAppHTTPResponse> {
+    return new Observable(observer => {
       if(!this.CONFIG.backendUrl) {
-        console.error('[Error][Sheetbase] No backend for this project!');
-        return reject(null);
+        return observer.error('[Error][Sheetbase] No backend for this project!');
       }
 
       // build uri
@@ -93,9 +91,9 @@ export class ApiService {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }).subscribe(data => {
-        if(data.error) return reject(data);
-        resolve(data);
-      }, reject);
+        if(data.error) return observer.error(data);
+        observer.next(data);
+      }, error => observer.error(error));
     });
   }
 

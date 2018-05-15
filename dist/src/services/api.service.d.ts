@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { Observable } from "rxjs/Observable";
 import { UserDataService } from './user-data.service';
 import { IAppHTTPResponse } from '../misc/interfaces';
 export declare class ApiService {
@@ -11,12 +12,12 @@ export declare class ApiService {
      * @param endpoint
      * @param params
      */
-    GET(endpoint?: string, params?: any): Promise<IAppHTTPResponse>;
+    GET(endpoint?: string, params?: any): Observable<IAppHTTPResponse>;
     /**
      * POST
      * @param endpoint
      * @param params
      * @param body
      */
-    POST(endpoint?: string, params?: any, body?: any): Promise<IAppHTTPResponse>;
+    POST(endpoint?: string, params?: any, body?: any): Observable<IAppHTTPResponse>;
 }
