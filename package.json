@@ -1,6 +1,6 @@
 {
   "name": "sheetbase-angular",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Sheetbase module for Angular/Ionic apps.",
   "main": "./src/index.ts",
   "scripts": {

@@ -1,4 +1,4 @@
-import { Injectable, Inject, NgZone } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
@@ -17,8 +17,6 @@ export class DataService {
   };
 
   constructor(
-    private ngZone: NgZone,
-
     @Inject(SheetbaseConfigService) private CONFIG: ISheetbaseConfig,
     private apiService: ApiService,
     private spreadsheetService: SpreadsheetService,
@@ -41,23 +39,25 @@ export class DataService {
 
       let itemsObject = (this.database||{})[collection];
       
-      // return data
+      // return data if available
       if(itemsObject && Object.keys(itemsObject).length > 0) {
         observer.next(this.returnData(collection, doc, query));
-      }
-
-      let dataGetter: Observable<any> = this.getData(collection, doc, query);
-      if(this.CONFIG.googleApiKey && this.CONFIG.databaseId) {
-        dataGetter = this.getDataSolutionLite(collection, doc, query);
-      }
-      
-      dataGetter.subscribe(result => {
-        this.ngZone.run(() => {
+        observer.complete();
+      } else {
+        // get new data
+        let dataGetter: Observable<any> = this.getData(collection, doc, query);
+        if(this.CONFIG.googleApiKey && this.CONFIG.databaseId) {
+          dataGetter = this.getDataSolutionLite(collection, doc, query);
+        }
+        
+        dataGetter.subscribe(result => {
           if(!this.database) this.database = {};
           this.database[collection] = result;
-        });
-        observer.next(this.returnData(collection, doc, query));
-      }, error => observer.error(error));
+  
+          observer.next(this.returnData(collection, doc, query));
+          observer.complete();
+        }, error => observer.error(error));
+      }      
 
     });
   }

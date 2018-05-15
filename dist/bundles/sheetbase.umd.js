@@ -320,8 +320,7 @@
     };
 
     var DataService = /** @class */ (function () {
-        function DataService(ngZone, CONFIG, apiService, spreadsheetService) {
-            this.ngZone = ngZone;
+        function DataService(CONFIG, apiService, spreadsheetService) {
             this.CONFIG = CONFIG;
             this.apiService = apiService;
             this.spreadsheetService = spreadsheetService;
@@ -350,22 +349,25 @@
             if (query === void 0) { query = null; }
             return new Observable.Observable(function (observer) {
                 var itemsObject = (_this.database || {})[collection];
-                // return data
+                // return data if available
                 if (itemsObject && Object.keys(itemsObject).length > 0) {
                     observer.next(_this.returnData(collection, doc, query));
+                    observer.complete();
                 }
-                var dataGetter = _this.getData(collection, doc, query);
-                if (_this.CONFIG.googleApiKey && _this.CONFIG.databaseId) {
-                    dataGetter = _this.getDataSolutionLite(collection, doc, query);
-                }
-                dataGetter.subscribe(function (result) {
-                    _this.ngZone.run(function () {
+                else {
+                    // get new data
+                    var dataGetter = _this.getData(collection, doc, query);
+                    if (_this.CONFIG.googleApiKey && _this.CONFIG.databaseId) {
+                        dataGetter = _this.getDataSolutionLite(collection, doc, query);
+                    }
+                    dataGetter.subscribe(function (result) {
                         if (!_this.database)
                             _this.database = {};
                         _this.database[collection] = result;
-                    });
-                    observer.next(_this.returnData(collection, doc, query));
-                }, function (error) { return observer.error(error); });
+                        observer.next(_this.returnData(collection, doc, query));
+                        observer.complete();
+                    }, function (error) { return observer.error(error); });
+                }
             });
         };
         DataService.prototype.getData = function (collection, doc, query) {
@@ -484,7 +486,6 @@
         ];
         /** @nocollapse */
         DataService.ctorParameters = function () { return [
-            { type: core.NgZone, },
             { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
             { type: ApiService, },
             { type: SpreadsheetService, },
