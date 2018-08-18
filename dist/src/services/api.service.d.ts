@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs';
 import { UserDataService } from './user-data.service';
 import { IAppHTTPResponse } from '../misc/interfaces';
 export declare class ApiService {

@@ -1,11 +1,13 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 import { HttpClient } from '@angular/common/http';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class SpreadsheetService {
 
   constructor(

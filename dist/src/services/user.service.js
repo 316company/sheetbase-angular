@@ -1,9 +1,12 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import * as PubSub from 'pubsub-js';
 import * as localforage from 'localforage';
 import { UserDataService } from './user-data.service';
 import { ApiService } from './api.service';
+import * as i0 from "@angular/core";
+import * as i1 from "./user-data.service";
+import * as i2 from "./api.service";
 var UserService = /** @class */ (function () {
     function UserService(ngZone, userDataService, apiService) {
         this.ngZone = ngZone;
@@ -17,7 +20,6 @@ var UserService = /** @class */ (function () {
         return new Observable(function (observer) {
             localforage.getItem('sheetbaseAuthData')
                 .then(function (data) {
-                // save data
                 // save data
                 _this.ngZone.run(function () {
                     _this.userDataService.user = data.user;
@@ -45,7 +47,6 @@ var UserService = /** @class */ (function () {
             }).subscribe(function (response) {
                 if (response.error)
                     return observer.error(response);
-                // save data
                 // save data
                 _this.ngZone.run(function () {
                     _this.userDataService.user = response.data.user;
@@ -77,7 +78,6 @@ var UserService = /** @class */ (function () {
             }).subscribe(function (response) {
                 if (response.error)
                     return observer.error(response);
-                // save data
                 // save data
                 _this.ngZone.run(function () {
                     _this.userDataService.user = response.data.user;
@@ -115,7 +115,6 @@ var UserService = /** @class */ (function () {
             }).subscribe(function (response) {
                 if (response.error)
                     return observer.error(response);
-                // save data
                 // save data
                 _this.ngZone.run(function () {
                     _this.userDataService.user = response.data.user;
@@ -175,14 +174,17 @@ var UserService = /** @class */ (function () {
         });
     };
     UserService.decorators = [
-        { type: Injectable },
+        { type: Injectable, args: [{
+                    providedIn: 'root'
+                },] },
     ];
     /** @nocollapse */
     UserService.ctorParameters = function () { return [
-        { type: NgZone, },
-        { type: UserDataService, },
-        { type: ApiService, },
+        { type: NgZone },
+        { type: UserDataService },
+        { type: ApiService }
     ]; };
+    UserService.ngInjectableDef = i0.defineInjectable({ factory: function UserService_Factory() { return new UserService(i0.inject(i0.NgZone), i0.inject(i1.UserDataService), i0.inject(i2.ApiService)); }, token: UserService, providedIn: "root" });
     return UserService;
 }());
 export { UserService };

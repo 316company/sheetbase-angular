@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { SpreadsheetService } from './spreadsheet.service';
 import { IDataQuery, ISheetbaseConfig } from '../misc/interfaces';
@@ -15,15 +15,15 @@ export declare class DataService {
      * @param query
      */
     get(collection: string, doc?: string, query?: IDataQuery): Observable<any>;
-    private getData(collection, doc, query);
-    private getDataSolutionLite(collection, doc, query);
+    private getData;
+    private getDataSolutionLite;
     /**
      *
      * @param collection
      * @param doc
      * @param query
      */
-    private returnData(collection, doc, query);
-    private filterResult(items, query);
-    private modifyValue(value, table);
+    private returnData;
+    private filterResult;
+    private modifyValue;
 }

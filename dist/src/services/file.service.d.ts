@@ -1,5 +1,5 @@
 import { NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { IAppFile, IAppHTTPResponse } from '../misc/interfaces';
 export declare class FileService {
@@ -9,5 +9,5 @@ export declare class FileService {
     get(fileId: string): Observable<IAppHTTPResponse>;
     upload(appFile: IAppFile, customFolder?: string, customName?: string): Observable<IAppHTTPResponse>;
     load(file: File): Observable<IAppFile>;
-    private base64Breakdown(base64Data);
+    private base64Breakdown;
 }

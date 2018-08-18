@@ -1,6 +1,8 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import * as i0 from "@angular/core";
+import * as i1 from "./api.service";
 var FileService = /** @class */ (function () {
     function FileService(ngZone, apiService) {
         this.ngZone = ngZone;
@@ -12,10 +14,7 @@ var FileService = /** @class */ (function () {
         });
     };
     // TODO: https://xkeshi.github.io/image-compressor/
-    // TODO: https://xkeshi.github.io/image-compressor/
-    FileService.prototype.upload = 
-    // TODO: https://xkeshi.github.io/image-compressor/
-    function (appFile, customFolder, customName) {
+    FileService.prototype.upload = function (appFile, customFolder, customName) {
         var _this = this;
         if (customFolder === void 0) { customFolder = null; }
         if (customName === void 0) { customName = null; }
@@ -61,13 +60,16 @@ var FileService = /** @class */ (function () {
         };
     };
     FileService.decorators = [
-        { type: Injectable },
+        { type: Injectable, args: [{
+                    providedIn: 'root'
+                },] },
     ];
     /** @nocollapse */
     FileService.ctorParameters = function () { return [
-        { type: NgZone, },
-        { type: ApiService, },
+        { type: NgZone },
+        { type: ApiService }
     ]; };
+    FileService.ngInjectableDef = i0.defineInjectable({ factory: function FileService_Factory() { return new FileService(i0.inject(i0.NgZone), i0.inject(i1.ApiService)); }, token: FileService, providedIn: "root" });
     return FileService;
 }());
 export { FileService };

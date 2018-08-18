@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 import * as PubSub from 'pubsub-js';
 import * as localforage from 'localforage';
@@ -7,7 +7,9 @@ import * as localforage from 'localforage';
 import { UserDataService } from './user-data.service';
 import { ApiService } from './api.service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class UserService {
 
   constructor(

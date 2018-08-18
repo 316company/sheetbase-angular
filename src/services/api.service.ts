@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 
@@ -8,7 +8,9 @@ import { UserDataService } from './user-data.service';
 
 import { IAppHTTPResponse } from '../misc/interfaces';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class ApiService {
 
   constructor(

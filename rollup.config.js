@@ -4,6 +4,7 @@ export default {
 		'@angular/core',
 		'@angular/common/http',
 		'rxjs',
+		'rxjs-compat',
 		'lodash',
 		'pubsub-js',
 		'localforage'

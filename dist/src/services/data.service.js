@@ -1,9 +1,13 @@
 import { Injectable, Inject } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
 import { SpreadsheetService } from './spreadsheet.service';
 import { HELPER } from '../misc/helper';
+import * as i0 from "@angular/core";
+import * as i1 from "./sheetbase-config.service";
+import * as i2 from "./api.service";
+import * as i3 from "./spreadsheet.service";
 var DataService = /** @class */ (function () {
     function DataService(CONFIG, apiService, spreadsheetService) {
         this.CONFIG = CONFIG;
@@ -16,19 +20,7 @@ var DataService = /** @class */ (function () {
      * @param doc
      * @param query
      */
-    /**
-       * Get data
-       * @param collection
-       * @param doc
-       * @param query
-       */
-    DataService.prototype.get = /**
-       * Get data
-       * @param collection
-       * @param doc
-       * @param query
-       */
-    function (collection, doc, query) {
+    DataService.prototype.get = function (collection, doc, query) {
         var _this = this;
         if (doc === void 0) { doc = null; }
         if (query === void 0) { query = null; }
@@ -80,19 +72,7 @@ var DataService = /** @class */ (function () {
      * @param doc
      * @param query
      */
-    /**
-       *
-       * @param collection
-       * @param doc
-       * @param query
-       */
-    DataService.prototype.returnData = /**
-       *
-       * @param collection
-       * @param doc
-       * @param query
-       */
-    function (collection, doc, query) {
+    DataService.prototype.returnData = function (collection, doc, query) {
         var itemsObject = (this.database || {})[collection] || {};
         // item
         if (doc) {
@@ -131,9 +111,7 @@ var DataService = /** @class */ (function () {
                 });
                 // console.log('final value ', value);
                 if ((typeof query.equalTo === 'boolean' && typeof value === 'boolean' && value === query.equalTo) || // true === true
-                    // true === true
                     (query.equalTo === '!null' && !!value) || // any (#false) === '!null'
-                    // any (#false) === '!null'
                     (typeof query.equalTo !== 'boolean' && typeof value !== 'boolean' && value === query.equalTo) // string, number === string, number
                 )
                     resultItems.push(item);
@@ -161,20 +139,23 @@ var DataService = /** @class */ (function () {
         var itemsObject = {};
         for (var key in value) {
             var item = value[key];
-            item = customModifier(item, {});
+            item = customModifier(item, { /* tools to help modify data */});
             itemsObject[key] = item;
         }
         return itemsObject;
     };
     DataService.decorators = [
-        { type: Injectable },
+        { type: Injectable, args: [{
+                    providedIn: 'root'
+                },] },
     ];
     /** @nocollapse */
     DataService.ctorParameters = function () { return [
-        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] },] },
-        { type: ApiService, },
-        { type: SpreadsheetService, },
+        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] }] },
+        { type: ApiService },
+        { type: SpreadsheetService }
     ]; };
+    DataService.ngInjectableDef = i0.defineInjectable({ factory: function DataService_Factory() { return new DataService(i0.inject(i1.SheetbaseConfigService), i0.inject(i2.ApiService), i0.inject(i3.SpreadsheetService)); }, token: DataService, providedIn: "root" });
     return DataService;
 }());
 export { DataService };

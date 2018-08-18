@@ -1,5 +1,5 @@
 import { NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { UserDataService } from './user-data.service';
 import { ApiService } from './api.service';
 export declare class UserService {

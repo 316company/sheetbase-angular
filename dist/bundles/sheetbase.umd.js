@@ -1,15 +1,15 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('rxjs/Observable'), require('@angular/common/http'), require('lodash'), require('pubsub-js'), require('localforage')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'rxjs/Observable', '@angular/common/http', 'lodash', 'pubsub-js', 'localforage'], factory) :
-    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global.Rx,global.http,global.lodash,global.PubSub,global.localforage));
-}(this, (function (exports,core,Observable,http,lodash,PubSub,localforage) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('rxjs'), require('@angular/common/http'), require('lodash'), require('pubsub-js'), require('localforage')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'rxjs', '@angular/common/http', 'lodash', 'pubsub-js', 'localforage'], factory) :
+    (factory((global.ng = global.ng || {}, global.ng.sheetbase = {}),global.ng.core,global.rxjs,global.i1,global.lodash,global.PubSub,global.localforage));
+}(this, (function (exports,i0,rxjs,i1,lodash,PubSub,localforage) { 'use strict';
 
-    var SheetbaseConfigService = new core.InjectionToken('SheetbaseConfig');
+    var SheetbaseConfigService = new i0.InjectionToken('SheetbaseConfig');
 
     var SpreadsheetService = /** @class */ (function () {
-        function SpreadsheetService(ngZone, http$$1, CONFIG) {
+        function SpreadsheetService(ngZone, http, CONFIG) {
             this.ngZone = ngZone;
-            this.http = http$$1;
+            this.http = http;
             this.CONFIG = CONFIG;
         }
         SpreadsheetService.prototype.get = function (tableName, range, keyField, returnObject) {
@@ -20,14 +20,12 @@
         };
         SpreadsheetService.prototype.getData = function (spreadsheetId, rangeA1, type, keyField, returnObject) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (rangeA1.indexOf(',') < 0) {
                     _this.load(spreadsheetId, rangeA1)
-                        .subscribe(function (value) {
-                        return _this.ngZone.run(function () {
-                            observer.next(_this.modifyValue(value, type, keyField, returnObject));
-                        });
-                    }, function (error) { return observer.error(error); });
+                        .subscribe(function (value) { return _this.ngZone.run(function () {
+                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
+                    }); }, function (error) { return observer.error(error); });
                 }
                 else {
                     var rangeStr_1 = '';
@@ -35,17 +33,15 @@
                         rangeStr_1 += '&ranges=' + range;
                     });
                     _this.loadBatch(spreadsheetId, rangeStr_1)
-                        .subscribe(function (value) {
-                        return _this.ngZone.run(function () {
-                            observer.next(_this.modifyValue(value, type, keyField, returnObject));
-                        });
-                    }, function (error) { return observer.error(error); });
+                        .subscribe(function (value) { return _this.ngZone.run(function () {
+                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
+                    }); }, function (error) { return observer.error(error); });
                 }
             });
         };
         SpreadsheetService.prototype.load = function (id, range) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values/" + range + "?key=" + _this.CONFIG.googleApiKey)
                     .subscribe(function (response) {
                     observer.next(_this.transformValue(response.values));
@@ -68,7 +64,7 @@
         };
         SpreadsheetService.prototype.loadBatch = function (id, ranges) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 _this.http.get("https://sheets.googleapis.com/v4/spreadsheets/" + id + "/values:batchGet?" + ranges + "&key=" + _this.CONFIG.googleApiKey)
                     .subscribe(function (response) {
                     observer.next(_this.transformBatchValue(response.valueRanges));
@@ -128,7 +124,7 @@
                     }
                 }
                 // custom modifier
-                item = customModifier(item, {});
+                item = customModifier(item, { /* tools to help modify data */});
                 // transform array to object
                 itemsObject = itemsObject || {};
                 itemsObject[keyField ? item[keyField] : (item['key'] || item['slug'] || ('' + item['id']) || ('' + item['#']) || ('' + Math.random() * 1E20))] = item;
@@ -138,14 +134,17 @@
             return returnObject ? itemsObject : itemsArray;
         };
         SpreadsheetService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         SpreadsheetService.ctorParameters = function () { return [
-            { type: core.NgZone, },
-            { type: http.HttpClient, },
-            { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
+            { type: i0.NgZone },
+            { type: i1.HttpClient },
+            { type: undefined, decorators: [{ type: i0.Inject, args: [SheetbaseConfigService,] }] }
         ]; };
+        SpreadsheetService.ngInjectableDef = i0.defineInjectable({ factory: function SpreadsheetService_Factory() { return new SpreadsheetService(i0.inject(i0.NgZone), i0.inject(i1.HttpClient), i0.inject(SheetbaseConfigService)); }, token: SpreadsheetService, providedIn: "root" });
         return SpreadsheetService;
     }());
 
@@ -153,16 +152,19 @@
         function UserDataService() {
         }
         UserDataService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         UserDataService.ctorParameters = function () { return []; };
+        UserDataService.ngInjectableDef = i0.defineInjectable({ factory: function UserDataService_Factory() { return new UserDataService(); }, token: UserDataService, providedIn: "root" });
         return UserDataService;
     }());
 
     var ApiService = /** @class */ (function () {
-        function ApiService(http$$1, CONFIG, userDataService) {
-            this.http = http$$1;
+        function ApiService(http, CONFIG, userDataService) {
+            this.http = http;
             this.CONFIG = CONFIG;
             this.userDataService = userDataService;
         }
@@ -171,21 +173,11 @@
          * @param endpoint
          * @param params
          */
-        /**
-           * GET
-           * @param endpoint
-           * @param params
-           */
-        ApiService.prototype.GET = /**
-           * GET
-           * @param endpoint
-           * @param params
-           */
-        function (endpoint, params) {
+        ApiService.prototype.GET = function (endpoint, params) {
             var _this = this;
             if (endpoint === void 0) { endpoint = null; }
             if (params === void 0) { params = {}; }
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!_this.CONFIG.backendUrl) {
                     return observer.error('[Error][Sheetbase] No backend for this project!');
                 }
@@ -222,24 +214,12 @@
          * @param params
          * @param body
          */
-        /**
-           * POST
-           * @param endpoint
-           * @param params
-           * @param body
-           */
-        ApiService.prototype.POST = /**
-           * POST
-           * @param endpoint
-           * @param params
-           * @param body
-           */
-        function (endpoint, params, body) {
+        ApiService.prototype.POST = function (endpoint, params, body) {
             var _this = this;
             if (endpoint === void 0) { endpoint = null; }
             if (params === void 0) { params = {}; }
             if (body === void 0) { body = {}; }
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!_this.CONFIG.backendUrl) {
                     return observer.error('[Error][Sheetbase] No backend for this project!');
                 }
@@ -272,14 +252,17 @@
             });
         };
         ApiService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         ApiService.ctorParameters = function () { return [
-            { type: http.HttpClient, },
-            { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
-            { type: UserDataService, },
+            { type: i1.HttpClient },
+            { type: undefined, decorators: [{ type: i0.Inject, args: [SheetbaseConfigService,] }] },
+            { type: UserDataService }
         ]; };
+        ApiService.ngInjectableDef = i0.defineInjectable({ factory: function ApiService_Factory() { return new ApiService(i0.inject(i1.HttpClient), i0.inject(SheetbaseConfigService), i0.inject(UserDataService)); }, token: ApiService, providedIn: "root" });
         return ApiService;
     }());
 
@@ -331,23 +314,11 @@
          * @param doc
          * @param query
          */
-        /**
-           * Get data
-           * @param collection
-           * @param doc
-           * @param query
-           */
-        DataService.prototype.get = /**
-           * Get data
-           * @param collection
-           * @param doc
-           * @param query
-           */
-        function (collection, doc, query) {
+        DataService.prototype.get = function (collection, doc, query) {
             var _this = this;
             if (doc === void 0) { doc = null; }
             if (query === void 0) { query = null; }
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 var itemsObject = (_this.database || {})[collection];
                 // return data if available
                 if (itemsObject && Object.keys(itemsObject).length > 0) {
@@ -372,7 +343,7 @@
         };
         DataService.prototype.getData = function (collection, doc, query) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 _this.apiService.GET('/data', {
                     table: collection
                 }).subscribe(function (response) {
@@ -382,7 +353,7 @@
         };
         DataService.prototype.getDataSolutionLite = function (collection, doc, query) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 _this.spreadsheetService.get(collection)
                     .subscribe(function (result) {
                     observer.next(result);
@@ -395,19 +366,7 @@
          * @param doc
          * @param query
          */
-        /**
-           *
-           * @param collection
-           * @param doc
-           * @param query
-           */
-        DataService.prototype.returnData = /**
-           *
-           * @param collection
-           * @param doc
-           * @param query
-           */
-        function (collection, doc, query) {
+        DataService.prototype.returnData = function (collection, doc, query) {
             var itemsObject = (this.database || {})[collection] || {};
             // item
             if (doc) {
@@ -446,9 +405,7 @@
                     });
                     // console.log('final value ', value);
                     if ((typeof query.equalTo === 'boolean' && typeof value === 'boolean' && value === query.equalTo) || // true === true
-                        // true === true
                         (query.equalTo === '!null' && !!value) || // any (#false) === '!null'
-                        // any (#false) === '!null'
                         (typeof query.equalTo !== 'boolean' && typeof value !== 'boolean' && value === query.equalTo) // string, number === string, number
                     )
                         resultItems.push(item);
@@ -476,20 +433,23 @@
             var itemsObject = {};
             for (var key in value) {
                 var item = value[key];
-                item = customModifier(item, {});
+                item = customModifier(item, { /* tools to help modify data */});
                 itemsObject[key] = item;
             }
             return itemsObject;
         };
         DataService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         DataService.ctorParameters = function () { return [
-            { type: undefined, decorators: [{ type: core.Inject, args: [SheetbaseConfigService,] },] },
-            { type: ApiService, },
-            { type: SpreadsheetService, },
+            { type: undefined, decorators: [{ type: i0.Inject, args: [SheetbaseConfigService,] }] },
+            { type: ApiService },
+            { type: SpreadsheetService }
         ]; };
+        DataService.ngInjectableDef = i0.defineInjectable({ factory: function DataService_Factory() { return new DataService(i0.inject(SheetbaseConfigService), i0.inject(ApiService), i0.inject(SpreadsheetService)); }, token: DataService, providedIn: "root" });
         return DataService;
     }());
 
@@ -503,10 +463,9 @@
         UserService.prototype.getUser = function () { return this.userDataService.user; };
         UserService.prototype.onAuthStateChanged = function () {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 localforage.getItem('sheetbaseAuthData')
                     .then(function (data) {
-                    // save data
                     // save data
                     _this.ngZone.run(function () {
                         _this.userDataService.user = data.user;
@@ -523,7 +482,7 @@
         };
         UserService.prototype.createUserWithEmailAndPassword = function (email, password) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!email || !password)
                     return observer.error('Missing email or password!');
                 _this.apiService.POST('/user/create', {}, {
@@ -534,7 +493,6 @@
                 }).subscribe(function (response) {
                     if (response.error)
                         return observer.error(response);
-                    // save data
                     // save data
                     _this.ngZone.run(function () {
                         _this.userDataService.user = response.data.user;
@@ -550,7 +508,7 @@
         };
         UserService.prototype.signInWithEmailAndPassword = function (email, password) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!email || !password)
                     return observer.error('Missing email or password!');
                 if (_this.userDataService.user)
@@ -567,7 +525,6 @@
                     if (response.error)
                         return observer.error(response);
                     // save data
-                    // save data
                     _this.ngZone.run(function () {
                         _this.userDataService.user = response.data.user;
                         _this.userDataService.token = response.data.token;
@@ -582,7 +539,7 @@
         };
         UserService.prototype.signOut = function () {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 _this.userDataService.user = null;
                 _this.userDataService.token = null;
                 localforage.removeItem('sheetbaseAuthData')
@@ -594,7 +551,7 @@
         };
         UserService.prototype.updateProfile = function (profile) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!profile || !(profile instanceof Object))
                     return observer.error('Invalid profile data.');
                 if (!_this.userDataService.user || !_this.userDataService.token)
@@ -604,7 +561,6 @@
                 }).subscribe(function (response) {
                     if (response.error)
                         return observer.error(response);
-                    // save data
                     // save data
                     _this.ngZone.run(function () {
                         _this.userDataService.user = response.data.user;
@@ -622,7 +578,7 @@
         };
         UserService.prototype.sendPasswordResetEmail = function (email) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!email)
                     return observer.error('Missing email!');
                 _this.apiService.POST('/auth/reset-password', {}, {
@@ -636,7 +592,7 @@
         };
         UserService.prototype.confirmPasswordReset = function (actionCode, newPassword) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!actionCode || !newPassword)
                     return observer.error('Missing actionCode or password!');
                 _this.apiService.POST('/auth/set-password', {}, {
@@ -651,7 +607,7 @@
         };
         UserService.prototype.applyActionCode = function (actionCode) {
             var _this = this;
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!actionCode)
                     return observer.error('Missing actionCode!');
                 _this.apiService.POST('/auth/verify-code', {}, {
@@ -664,14 +620,17 @@
             });
         };
         UserService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         UserService.ctorParameters = function () { return [
-            { type: core.NgZone, },
-            { type: UserDataService, },
-            { type: ApiService, },
+            { type: i0.NgZone },
+            { type: UserDataService },
+            { type: ApiService }
         ]; };
+        UserService.ngInjectableDef = i0.defineInjectable({ factory: function UserService_Factory() { return new UserService(i0.inject(i0.NgZone), i0.inject(UserDataService), i0.inject(ApiService)); }, token: UserService, providedIn: "root" });
         return UserService;
     }());
 
@@ -686,14 +645,11 @@
             });
         };
         // TODO: https://xkeshi.github.io/image-compressor/
-        // TODO: https://xkeshi.github.io/image-compressor/
-        FileService.prototype.upload = 
-        // TODO: https://xkeshi.github.io/image-compressor/
-        function (appFile, customFolder, customName) {
+        FileService.prototype.upload = function (appFile, customFolder, customName) {
             var _this = this;
             if (customFolder === void 0) { customFolder = null; }
             if (customName === void 0) { customName = null; }
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!appFile)
                     return observer.error('No local file!');
                 var body = {
@@ -712,7 +668,7 @@
             });
         };
         FileService.prototype.load = function (file) {
-            return new Observable.Observable(function (observer) {
+            return new rxjs.Observable(function (observer) {
                 if (!file)
                     return observer.error(null);
                 var reader = new FileReader();
@@ -735,13 +691,16 @@
             };
         };
         FileService.decorators = [
-            { type: core.Injectable },
+            { type: i0.Injectable, args: [{
+                        providedIn: 'root'
+                    },] },
         ];
         /** @nocollapse */
         FileService.ctorParameters = function () { return [
-            { type: core.NgZone, },
-            { type: ApiService, },
+            { type: i0.NgZone },
+            { type: ApiService }
         ]; };
+        FileService.ngInjectableDef = i0.defineInjectable({ factory: function FileService_Factory() { return new FileService(i0.inject(i0.NgZone), i0.inject(ApiService)); }, token: FileService, providedIn: "root" });
         return FileService;
     }());
 
@@ -766,7 +725,7 @@
             };
         };
         SheetbaseModule.decorators = [
-            { type: core.NgModule },
+            { type: i0.NgModule },
         ];
         return SheetbaseModule;
     }());

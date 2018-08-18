@@ -6,6 +6,6 @@
  */ 
 import * as i0 from "@angular/core";
 import * as i1 from "./sheetbase.module";
-var SheetbaseModuleNgFactory = i0.ɵcmf(i1.SheetbaseModule, [], function (_l) { return i0.ɵmod([i0.ɵmpd(512, i0.ComponentFactoryResolver, i0.ɵCodegenComponentFactoryResolver, [[8, []], [3, i0.ComponentFactoryResolver], i0.NgModuleRef]), i0.ɵmpd(512, i1.SheetbaseModule, i1.SheetbaseModule, [])]); });
+var SheetbaseModuleNgFactory = i0.ɵcmf(i1.SheetbaseModule, [], function (_l) { return i0.ɵmod([i0.ɵmpd(512, i0.ComponentFactoryResolver, i0.ɵCodegenComponentFactoryResolver, [[8, []], [3, i0.ComponentFactoryResolver], i0.NgModuleRef]), i0.ɵmpd(1073742336, i1.SheetbaseModule, i1.SheetbaseModule, [])]); });
 export { SheetbaseModuleNgFactory as SheetbaseModuleNgFactory };
 //# sourceMappingURL=sheetbase.module.ngfactory.js.map

@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { ApiService } from './api.service';
@@ -9,7 +9,9 @@ import { IDataQuery, ISheetbaseConfig } from '../misc/interfaces';
 import { HELPER } from '../misc/helper';
 
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class DataService {
 
   private database: {

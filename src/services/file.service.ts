@@ -1,11 +1,13 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 
 import { IAppFile, IAppHTTPResponse } from '../misc/interfaces';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class FileService {
 
   constructor(

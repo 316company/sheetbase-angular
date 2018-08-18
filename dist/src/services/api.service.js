@@ -1,8 +1,12 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs';
 import { SheetbaseConfigService } from './sheetbase-config.service';
 import { UserDataService } from './user-data.service';
+import * as i0 from "@angular/core";
+import * as i1 from "@angular/common/http";
+import * as i2 from "./sheetbase-config.service";
+import * as i3 from "./user-data.service";
 var ApiService = /** @class */ (function () {
     function ApiService(http, CONFIG, userDataService) {
         this.http = http;
@@ -14,17 +18,7 @@ var ApiService = /** @class */ (function () {
      * @param endpoint
      * @param params
      */
-    /**
-       * GET
-       * @param endpoint
-       * @param params
-       */
-    ApiService.prototype.GET = /**
-       * GET
-       * @param endpoint
-       * @param params
-       */
-    function (endpoint, params) {
+    ApiService.prototype.GET = function (endpoint, params) {
         var _this = this;
         if (endpoint === void 0) { endpoint = null; }
         if (params === void 0) { params = {}; }
@@ -65,19 +59,7 @@ var ApiService = /** @class */ (function () {
      * @param params
      * @param body
      */
-    /**
-       * POST
-       * @param endpoint
-       * @param params
-       * @param body
-       */
-    ApiService.prototype.POST = /**
-       * POST
-       * @param endpoint
-       * @param params
-       * @param body
-       */
-    function (endpoint, params, body) {
+    ApiService.prototype.POST = function (endpoint, params, body) {
         var _this = this;
         if (endpoint === void 0) { endpoint = null; }
         if (params === void 0) { params = {}; }
@@ -115,14 +97,17 @@ var ApiService = /** @class */ (function () {
         });
     };
     ApiService.decorators = [
-        { type: Injectable },
+        { type: Injectable, args: [{
+                    providedIn: 'root'
+                },] },
     ];
     /** @nocollapse */
     ApiService.ctorParameters = function () { return [
-        { type: HttpClient, },
-        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] },] },
-        { type: UserDataService, },
+        { type: HttpClient },
+        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] }] },
+        { type: UserDataService }
     ]; };
+    ApiService.ngInjectableDef = i0.defineInjectable({ factory: function ApiService_Factory() { return new ApiService(i0.inject(i1.HttpClient), i0.inject(i2.SheetbaseConfigService), i0.inject(i3.UserDataService)); }, token: ApiService, providedIn: "root" });
     return ApiService;
 }());
 export { ApiService };

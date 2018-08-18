@@ -1,7 +1,10 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { SheetbaseConfigService } from './sheetbase-config.service';
+import * as i0 from "@angular/core";
+import * as i1 from "@angular/common/http";
+import * as i2 from "./sheetbase-config.service";
 var SpreadsheetService = /** @class */ (function () {
     function SpreadsheetService(ngZone, http, CONFIG) {
         this.ngZone = ngZone;
@@ -19,11 +22,9 @@ var SpreadsheetService = /** @class */ (function () {
         return new Observable(function (observer) {
             if (rangeA1.indexOf(',') < 0) {
                 _this.load(spreadsheetId, rangeA1)
-                    .subscribe(function (value) {
-                    return _this.ngZone.run(function () {
-                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
-                    });
-                }, function (error) { return observer.error(error); });
+                    .subscribe(function (value) { return _this.ngZone.run(function () {
+                    observer.next(_this.modifyValue(value, type, keyField, returnObject));
+                }); }, function (error) { return observer.error(error); });
             }
             else {
                 var rangeStr_1 = '';
@@ -31,11 +32,9 @@ var SpreadsheetService = /** @class */ (function () {
                     rangeStr_1 += '&ranges=' + range;
                 });
                 _this.loadBatch(spreadsheetId, rangeStr_1)
-                    .subscribe(function (value) {
-                    return _this.ngZone.run(function () {
-                        observer.next(_this.modifyValue(value, type, keyField, returnObject));
-                    });
-                }, function (error) { return observer.error(error); });
+                    .subscribe(function (value) { return _this.ngZone.run(function () {
+                    observer.next(_this.modifyValue(value, type, keyField, returnObject));
+                }); }, function (error) { return observer.error(error); });
             }
         });
     };
@@ -124,7 +123,7 @@ var SpreadsheetService = /** @class */ (function () {
                 }
             }
             // custom modifier
-            item = customModifier(item, {});
+            item = customModifier(item, { /* tools to help modify data */});
             // transform array to object
             itemsObject = itemsObject || {};
             itemsObject[keyField ? item[keyField] : (item['key'] || item['slug'] || ('' + item['id']) || ('' + item['#']) || ('' + Math.random() * 1E20))] = item;
@@ -134,14 +133,17 @@ var SpreadsheetService = /** @class */ (function () {
         return returnObject ? itemsObject : itemsArray;
     };
     SpreadsheetService.decorators = [
-        { type: Injectable },
+        { type: Injectable, args: [{
+                    providedIn: 'root'
+                },] },
     ];
     /** @nocollapse */
     SpreadsheetService.ctorParameters = function () { return [
-        { type: NgZone, },
-        { type: HttpClient, },
-        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] },] },
+        { type: NgZone },
+        { type: HttpClient },
+        { type: undefined, decorators: [{ type: Inject, args: [SheetbaseConfigService,] }] }
     ]; };
+    SpreadsheetService.ngInjectableDef = i0.defineInjectable({ factory: function SpreadsheetService_Factory() { return new SpreadsheetService(i0.inject(i0.NgZone), i0.inject(i1.HttpClient), i0.inject(i2.SheetbaseConfigService)); }, token: SpreadsheetService, providedIn: "root" });
     return SpreadsheetService;
 }());
 export { SpreadsheetService };

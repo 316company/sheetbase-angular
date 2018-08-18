@@ -22,10 +22,10 @@ imports: [
 Inject services into your page.
 
 ```typescript
-import { DataService as DataProvider } from 'sheetbase-angular';
+import { DataService } from 'sheetbase-angular';
 
 constructor(
-	private sheetbaseData: DataProvider
+	private sheetbaseData: DataService
 ) {}
 
 ngOnInit() {
