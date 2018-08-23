@@ -47,9 +47,9 @@ export class DataService {
         observer.complete();
       } else {
         // get new data
-        let dataGetter: Observable<any> = this.getData(collection, doc, query);
+        let dataGetter: Observable<any> = this.getData(collection);
         if(this.CONFIG.googleApiKey && this.CONFIG.databaseId) {
-          dataGetter = this.getDataSolutionLite(collection, doc, query);
+          dataGetter = this.getDataSolutionLite(collection);
         }
         
         dataGetter.subscribe(result => {
@@ -65,13 +65,11 @@ export class DataService {
   }
 
   private getData(
-    collection: string,
-    doc: string,
-    query: IDataQuery
+    collection: string
   ): Observable<any> {
     return new Observable(observer => {
       this.apiService.GET('/data', {
-        table: collection
+        path: collection
       }).subscribe(response => {
         observer.next(
           this.modifyValue(response.data, collection)
@@ -81,9 +79,7 @@ export class DataService {
   }
 
   private getDataSolutionLite(
-    collection: string,
-    doc: string,
-    query: IDataQuery
+    collection: string
   ): Observable<any> {
     return new Observable(observer => {
       this.spreadsheetService.get(

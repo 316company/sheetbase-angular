@@ -1,1 +1,0 @@
-[{"__symbolic":"module","version":4,"metadata":{"SheetbaseConfigService":{"__symbolic":"new","expression":{"__symbolic":"reference","module":"@angular/core","name":"InjectionToken","line":4,"character":42},"arguments":["SheetbaseConfig"]}}}]

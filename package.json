@@ -1,6 +1,6 @@
 {
   "name": "sheetbase-angular",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Sheetbase module for Angular/Ionic apps.",
   "main": "./src/index.ts",
   "scripts": {
@@ -20,17 +20,16 @@
     "url": "https://github.com/316Company/sheetbase-core-angular/issues"
   },
   "dependencies": {
-    "@angular/common": "^6.1.3",
-    "@angular/core": "^6.1.3",
+    "@angular/common": "^6.1.4",
+    "@angular/core": "^6.1.4",
     "localforage": "^1.7.2",
     "lodash": "^4.17.10",
-    "pubsub-js": "^1.6.0",
+    "pubsub-js": "^1.6.1",
     "rxjs": "^6.2.2"
   },
   "devDependencies": {
-    "@angular/compiler": "^6.1.3",
-    "@angular/compiler-cli": "^6.1.3",
-    "@types/lodash": "^4.14.116",
+    "@angular/compiler": "^6.1.4",
+    "@angular/compiler-cli": "^6.1.4",
     "rollup": "^0.64.1",
     "typescript": "^2.9.2",
     "uglify-js": "^3.4.7"
