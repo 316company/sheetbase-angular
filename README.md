@@ -1,3 +1,7 @@
+# ⛔️ DEPRECATED
+
+Please use https://github.com/sheetbase/angular instead.
+
 # Sheetbase Angular
 
 Angular module for using Sheetbase in Angular/Ionic projects.
